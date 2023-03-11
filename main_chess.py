@@ -3,7 +3,7 @@
 
 import pygame as p
 from chess_assistant import Estado_Juego, Movimiento
-from Clases import pieza, pawn, bishop, rook, queen, knight
+from Clases import pieza, pawn, bishop, rook, queen, knight,king
 
 #  Colores para el diseño
 
@@ -206,6 +206,8 @@ def CrearObjeto(Primer_click, board):
         objeto = queen("Q", color, fila, col, [], [], board)
     elif board[Primer_click[0]][Primer_click[1]][1] == "N":
         objeto = knight("N", color, fila, col, [], [], board)
+    elif board[Primer_click[0]][Primer_click[1]][1] == "K":
+        objeto = king("K", color, fila, col, [], [], board)
     return objeto
 
 # Para que se ejecute solo cuando corro este archivo.py

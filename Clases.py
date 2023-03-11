@@ -269,3 +269,53 @@ class knight(pieza):
                 self.cas_avail.append((self.fila+2, self.col-1))
             elif self.board[self.fila+2][self.col-1][0] != self.color:
                 self.cas_take.append((self.fila+2, self.col-1))
+
+    class king(pieza):
+        def __init__(self, tipo, color, fila, col, cas_avail, cas_take, board):
+            super().__init__(tipo, color, fila, col, cas_avail, cas_take, board)  # Define cuál pieza es
+            self.tipo = tipo
+            self.get_cas_avail_take()
+        
+        def get_cas_avail_take(self):
+
+            #Agregar que esto se haga solo si el rey no está siendo atacado
+            if self.fila + 1 <= 7:
+                if self.board[self.fila+1][self.col] == "--":
+                    self.cas_avail.append((self.fila+1, self.col))
+                elif self.board[self.fila+1][self.col][0] != self.color:
+                    self.cas_take.append((self.fila+1, self.col))
+            if self.col +1 <= 7 :
+                if self.board[self.fila][self.col+1] == "--":
+                    self.cas_avail.append((self.fila, self.col+1))
+                elif self.board[self.fila][self.col+1][0] != self.color:
+                    self.cas_take.append((self.fila, self.col+1))
+            if self.col - 1 >= 0:
+                if self.board[self.fila][self.col-1] == "--":
+                    self.cas_avail.append((self.fila, self.col-1))
+                elif self.board[self.fila][self.col-1][0] != self.color:
+                    self.cas_take.append((self.fila, self.col-1))
+            if self.fila -1 >= 0:
+                if self.board[self.fila-1][self.col] == "--":
+                    self.cas_avail.append((self.fila-1, self.col))
+                elif self.board[self.fila-1][self.col][0] != self.color:
+                    self.cas_take.append((self.fila-1, self.col))
+            if self.col - 1 >= 0 and self.fila + 1 <= 7:
+                if self.board[self.fila+1][self.col-1] == "--":
+                    self.cas_avail.append((self.fila+1, self.col-1))
+                elif self.board[self.fila+1][self.col-1][0] != self.color:
+                    self.cas_take.append((self.fila+1, self.col-1))
+            if self.col +1 <= 7 and self.fila - 1 >= 0:
+                if self.board[self.fila-1][self.col+1] == "--":
+                    self.cas_avail.append((self.fila-1, self.col+1))
+                elif self.board[self.fila-1][self.col+1][0] != self.color:
+                    self.cas_take.append((self.fila-1, self.col+1))
+            if self.col +1 <= 7 and self.fila + 1 <= 7:
+                if self.board[self.fila+1][self.col+1] == "--":
+                    self.cas_avail.append((self.fila+1, self.col+1))
+                elif self.board[self.fila+1][self.col+1][0] != self.color:
+                    self.cas_take.append((self.fila+1, self.col+1))
+            if self.col - 1 >= 0 and self.fila - 1 >= 0:
+                if self.board[self.fila-1][self.col-1] == "--":
+                    self.cas_avail.append((self.fila-1, self.col-1))
+                elif self.board[self.fila-1][self.col-1][0] != self.color:
+                    self.cas_take.append((self.fila-1, self.col-1))
