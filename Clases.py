@@ -1,5 +1,11 @@
 class pieza:
-
+    primerMov=0
+    passant = False
+    promotion = False
+    enroqueCorto = False
+    enroqueLargo = False
+    pos_ant_fila = None
+    pos_ant_col = None
     def __init__(self, tipo, color, fila, col, cas_avail, cas_take, board):
         self.tipo = " "  # Define cuál pieza es
         self.color = color
@@ -9,14 +15,35 @@ class pieza:
         self.cas_take = []  # Define las casillas donde puede comer
         self.board = board
 
+class pila:
+    def __init__(self):
+        self.items=[]
+
+    def apilar(self,apilar:pieza):
+        self.items.append(apilar)
+
+    def desapilar_apilado(self,apilado:pieza):
+        for i in range(0,len(self.items)-1):
+            if apilado.pos_ant_col == self.items[i].col and apilado.pos_ant_fila == self.items[i].fila:
+                self.items.pop(i)
+
+    def updt_objeto(self,objeto1:pieza):
+        for i in range(0,len(self.items)):
+            if objeto1.pos_ant_col == self.items[i].col and objeto1.pos_ant_fila == self.items[i].fila and objeto1.tipo==self.items[i].tipo and objeto1.color==self.items[i].color:
+                objeto1.primerMov=self.items[i].primerMov
+                if (self.items[i].tipo == "R" or self.items[i].tipo == "K")  and self.items[i].primerMov<2:
+                    objeto1.primerMov+=1
+                    
+                elif self.items[i].tipo == "P" and self.items[i].primerMov<3:
+                    objeto1.primerMov+=1
 
 class pawn(pieza):
-
-    def __init__(self, tipo, color, fila, col, cas_avail, cas_take, board):
+    def __init__(self, tipo, color, fila, col, cas_avail, cas_take, board,array):
         super().__init__(tipo, color, fila, col, cas_avail, cas_take, board)  # Define cuál pieza es
         self.tipo = tipo
         self.get_cas_avail()
-        self.get_cas_take()
+        self.get_cas_take(array)
+    
 
     def get_cas_avail(self):
         if self.color == "w":  # Se revisa si la self es blanca para asignar los valores en los que se van a poner dos cuadros
@@ -25,25 +52,48 @@ class pawn(pieza):
         else:
             a = 1
             b = 1
-        print(self.board[self.fila+a][self.col])
+        #print(self.board[self.fila+a][self.col])
         if self.board[self.fila+a][self.col] == "--":  # Si la posición aledaña está vacía se asigna a su lista de posiciones disponibles, la posición 
             self.cas_avail.append((self.fila+a, self.col))
         if self.fila == b:  # Se revisa si está en posición inicial del pawn
             if self.board[self.fila+(a*2)][self.col] == "--": 
                 self.cas_avail.append((self.fila+(a*2), self.col))
 
-    def get_cas_take(self):
+    def get_cas_take(self,array: pila):
         if self.color == "w":  # Se revisa si la self es blanca para asignar los valores en los que se van a poner dos cuadros
             a = -1
+            b = 3
+            c = "bP"
         else:
             a = 1
+            b = 4
+            c = "wP"
         if (self.col != 7 and self.color == "b") or self.color == "w":
             if self.board[self.fila+a][self.col+a] != "--" and self.board[self.fila+a][self.col+a][0] != self.color:
-                self.cas_take.append((self.fila+a, self.col+a))
+                self.cas_take.append((self.fila+a, self.col+a))                   
         if (self.col != 7 and self.color == "w") or self.color == "b":
             if self.board[self.fila+a][self.col-a] != "--" and self.board[self.fila+a][self.col-a][0] != self.color:
                 self.cas_take.append((self.fila+a, self.col-a))
 
+        #Comer al paso
+        if self.fila == b:
+            #print(self.col, self.col-1, self.col+1)
+            print(array.items[-1].color,array.items[-1].primerMov)
+            if self.board[self.fila][self.col-1] == c and self.col-1 > -1 and self.col-1==array.items[-1].col and array.items[-1].tipo=="P" and array.items[-1].color!=self.color and array.items[-1].primerMov==1:
+                if self.color=="w" and self.board[self.fila+a][self.col+a] == "--":
+                    self.cas_take.append((self.fila+a, self.col+a))
+                    self.passant = True
+                if self.color=="b" and self.board[self.fila+a][self.col-a] == "--":
+                    self.cas_take.append((self.fila+a, self.col-a))
+                    self.passant = True
+            if self.col+1 < 8 and self.board[self.fila][self.col+1] == c and self.col+1==array.items[-1].col and array.items[-1].tipo=="P" and array.items[-1].color!=self.color and array.items[-1].primerMov==1:
+                    if self.color=="w" and self.board[self.fila+a][self.col+a] == "--":
+                        self.cas_take.append((self.fila+a, self.col-a)) 
+                        self.passant = True
+                    if self.color=="b" and self.board[self.fila+a][self.col-a] == "--":
+                        self.cas_take.append((self.fila+a, self.col+a))
+                        self.passant = True    
+        
 
 class bishop(pieza):
 
@@ -92,7 +142,6 @@ class bishop(pieza):
                     d4 = 1
                     if self.board[self.fila-i][self.col+i][0] != self.color:
                         self.cas_take.append((self.fila-i, self.col+i))
-
 
 class rook(pieza):
 
@@ -223,6 +272,7 @@ class knight(pieza):
     def __init__(self, tipo, color, fila, col, cas_avail, cas_take, board):
         super().__init__(tipo, color, fila, col, cas_avail, cas_take, board)  # Define cuál pieza es
         self.tipo = tipo
+        self.enroque=[]
         self.get_cas_avail_take()
 
     def get_cas_avail_take(self):
@@ -270,52 +320,72 @@ class knight(pieza):
             elif self.board[self.fila+2][self.col-1][0] != self.color:
                 self.cas_take.append((self.fila+2, self.col-1))
 
-    class king(pieza):
-        def __init__(self, tipo, color, fila, col, cas_avail, cas_take, board):
-            super().__init__(tipo, color, fila, col, cas_avail, cas_take, board)  # Define cuál pieza es
-            self.tipo = tipo
-            self.get_cas_avail_take()
-        
-        def get_cas_avail_take(self):
+class king(pieza):
+    def __init__(self, tipo, color, fila, col, cas_avail, cas_take, board,array):
+        super().__init__(tipo, color, fila, col, cas_avail, cas_take, board)  # Define cuál pieza es
+        self.tipo = tipo
+        self.get_cas_avail_take(array)
+    
+    def get_cas_avail_take(self,array):
 
-            #Agregar que esto se haga solo si el rey no está siendo atacado
-            if self.fila + 1 <= 7:
-                if self.board[self.fila+1][self.col] == "--":
-                    self.cas_avail.append((self.fila+1, self.col))
-                elif self.board[self.fila+1][self.col][0] != self.color:
-                    self.cas_take.append((self.fila+1, self.col))
-            if self.col +1 <= 7 :
-                if self.board[self.fila][self.col+1] == "--":
-                    self.cas_avail.append((self.fila, self.col+1))
-                elif self.board[self.fila][self.col+1][0] != self.color:
-                    self.cas_take.append((self.fila, self.col+1))
-            if self.col - 1 >= 0:
-                if self.board[self.fila][self.col-1] == "--":
-                    self.cas_avail.append((self.fila, self.col-1))
-                elif self.board[self.fila][self.col-1][0] != self.color:
-                    self.cas_take.append((self.fila, self.col-1))
-            if self.fila -1 >= 0:
-                if self.board[self.fila-1][self.col] == "--":
-                    self.cas_avail.append((self.fila-1, self.col))
-                elif self.board[self.fila-1][self.col][0] != self.color:
-                    self.cas_take.append((self.fila-1, self.col))
-            if self.col - 1 >= 0 and self.fila + 1 <= 7:
-                if self.board[self.fila+1][self.col-1] == "--":
-                    self.cas_avail.append((self.fila+1, self.col-1))
-                elif self.board[self.fila+1][self.col-1][0] != self.color:
-                    self.cas_take.append((self.fila+1, self.col-1))
-            if self.col +1 <= 7 and self.fila - 1 >= 0:
-                if self.board[self.fila-1][self.col+1] == "--":
-                    self.cas_avail.append((self.fila-1, self.col+1))
-                elif self.board[self.fila-1][self.col+1][0] != self.color:
-                    self.cas_take.append((self.fila-1, self.col+1))
-            if self.col +1 <= 7 and self.fila + 1 <= 7:
-                if self.board[self.fila+1][self.col+1] == "--":
-                    self.cas_avail.append((self.fila+1, self.col+1))
-                elif self.board[self.fila+1][self.col+1][0] != self.color:
-                    self.cas_take.append((self.fila+1, self.col+1))
-            if self.col - 1 >= 0 and self.fila - 1 >= 0:
-                if self.board[self.fila-1][self.col-1] == "--":
-                    self.cas_avail.append((self.fila-1, self.col-1))
-                elif self.board[self.fila-1][self.col-1][0] != self.color:
-                    self.cas_take.append((self.fila-1, self.col-1))
+        #Agregar que esto se haga solo si el rey no está siendo atacado
+        if self.fila + 1 <= 7:
+            if self.board[self.fila+1][self.col] == "--":
+                self.cas_avail.append((self.fila+1, self.col))
+            elif self.board[self.fila+1][self.col][0] != self.color:
+                self.cas_take.append((self.fila+1, self.col))
+        if self.col +1 <= 7 :
+            if self.board[self.fila][self.col+1] == "--":
+                self.cas_avail.append((self.fila, self.col+1))
+            elif self.board[self.fila][self.col+1][0] != self.color:
+                self.cas_take.append((self.fila, self.col+1))
+        if self.col - 1 >= 0:
+            if self.board[self.fila][self.col-1] == "--":
+                self.cas_avail.append((self.fila, self.col-1))
+            elif self.board[self.fila][self.col-1][0] != self.color:
+                self.cas_take.append((self.fila, self.col-1))
+        if self.fila -1 >= 0:
+            if self.board[self.fila-1][self.col] == "--":
+                self.cas_avail.append((self.fila-1, self.col))
+            elif self.board[self.fila-1][self.col][0] != self.color:
+                self.cas_take.append((self.fila-1, self.col))
+        if self.col - 1 >= 0 and self.fila + 1 <= 7:
+            if self.board[self.fila+1][self.col-1] == "--":
+                self.cas_avail.append((self.fila+1, self.col-1))
+            elif self.board[self.fila+1][self.col-1][0] != self.color:
+                self.cas_take.append((self.fila+1, self.col-1))
+        if self.col +1 <= 7 and self.fila - 1 >= 0:
+            if self.board[self.fila-1][self.col+1] == "--":
+                self.cas_avail.append((self.fila-1, self.col+1))
+            elif self.board[self.fila-1][self.col+1][0] != self.color:
+                self.cas_take.append((self.fila-1, self.col+1))
+        if self.col +1 <= 7 and self.fila + 1 <= 7:
+            if self.board[self.fila+1][self.col+1] == "--":
+                self.cas_avail.append((self.fila+1, self.col+1))
+            elif self.board[self.fila+1][self.col+1][0] != self.color:
+                self.cas_take.append((self.fila+1, self.col+1))
+        if self.col - 1 >= 0 and self.fila - 1 >= 0:
+            if self.board[self.fila-1][self.col-1] == "--":
+                self.cas_avail.append((self.fila-1, self.col-1))
+            elif self.board[self.fila-1][self.col-1][0] != self.color:
+                self.cas_take.append((self.fila-1, self.col-1))
+        
+
+        #Enroque
+        
+        if any((obj.tipo=="K" and obj.color==self.color and obj.primerMov ==0 for obj in array.items)):
+            if self.board[self.fila][self.col+1] == "--" and self.board[self.fila][self.col+2]=="--":
+                    if any(obj.tipo=="R" and obj.color == self.color and obj.col==self.col+3 and obj.primerMov==0 for obj in array.items) :
+                            print('enroque CORTO')
+                            self.cas_avail.append((self.fila,self.col+2))
+                            self.enroqueCorto = True
+            if self.board[self.fila][self.col-1]=="--" and self.board[self.fila][self.col-2]=="--" and self.board[self.fila][self.col-3]=="--":
+                    if any(obj.tipo=="R" and obj.color == self.color and obj.col==self.col-4 and obj.primerMov==0 for obj in array.items) :
+                            print('enroque LARGO')
+                            self.cas_avail.append((self.fila,self.col-2))
+                            self.enroqueLargo = True
+        
+
+                    
+
+

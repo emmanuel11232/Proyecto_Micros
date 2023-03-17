@@ -2,8 +2,8 @@
 # del juego
 
 import pygame as p
-from chess_assistant import Estado_Juego, Movimiento
-from Clases import pieza, pawn, bishop, rook, queen, knight,king
+from chess_assistant import Estado_Juego, Movimiento, Estado_promotion_b, Estado_promotion_w
+from Clases import pieza, pawn, bishop, rook, queen, knight, king, pila
 
 #  Colores para el diseño
 
@@ -58,9 +58,13 @@ def main():
     reloj = p.time.Clock() 
     #screen.fill(p.Color("white")) 
     screen.fill(white)
-    juego = Estado_Juego() 
+    juego = Estado_Juego()
     array = []
     array2 = []
+    array_objetos=pila()
+    global primerMovimiento
+    primerMovimiento = 0
+    crear_array_objetos(array_objetos,juego.board)
     load_images()
     running = True
     cuadro_selec = ()  # Tupla (fila, columna) que Va a iniciar vacía,
@@ -94,7 +98,7 @@ def main():
                     if juego.board[fila][columna] != "--" or len(historial_clicks) == 1:
                         historial_clicks.append(cuadro_selec)
                     if len(historial_clicks) == 1:
-                        objeto1 = CrearObjeto(historial_clicks[0], juego.board)
+                        objeto1 = CrearObjeto(historial_clicks[0], juego.board,array_objetos)
                         array = objeto1.cas_avail
                         array2 = objeto1.cas_take
                 if len(historial_clicks) == 2:
@@ -105,13 +109,29 @@ def main():
                     # mov_in = historial_clicks[0]
                     # mov_fin = historial_clicks[1]
                     # Clase que controla las jugadas
-                    if Valida(historial_clicks, objeto1.cas_avail, objeto1.cas_take):
+                    if Valida(historial_clicks, objeto1.cas_avail, objeto1.cas_take, objeto1.color, array_objetos,primerMovimiento):
                         mov_in = historial_clicks[0]
                         mov_fin = historial_clicks[1]
+                        objeto1.pos_ant_col=mov_in[1]
+                        objeto1.pos_ant_fila=mov_in[0]
+                        objeto1.col=mov_fin[1]
+                        objeto1.fila=mov_fin[0]
+                        array_objetos.updt_objeto(objeto1)
+                        array_objetos.desapilar_apilado(objeto1)
+                        array_objetos.apilar(objeto1)
+                        primerMovimiento=1
                         mov = Movimiento(mov_in, mov_fin, juego.board)
+                        mov.pieza_movida = promotion(objeto1, mov.pieza_movida)
+                        ##Se actualizan las fichas luego de cada movimiento
                         # Mustra la notación del movimiento
-                        print(mov.Notacion_chess())
-                        juego.Jugada(mov)
+                        #print(mov.Notacion_chess())
+                        #array_objetos[i].fila,array_objetos[i].col,array_objetos[i].pos_ant_fila,array_objetos[i].pos_ant_col"""
+                        """for i in range(0,32):
+                            print(array_objetos.items[i].tipo)
+                            #if array_objetos.items[i].tipo=="P":
+                            print(array_objetos.items[i].tipo,i,array_objetos.items[i].color,array_objetos.items[i].pos_ant_fila, array_objetos.items[i].primerMov)
+                            print("............................")"""
+                        juego.Jugada(mov, objeto1.passant,objeto1)
                         # Se resetean las variables que guardan el último click
                         # del usuario y el historial de clicks
                         cuadro_selec = ()
@@ -119,10 +139,68 @@ def main():
                     else:
                         cuadro_selec = ()
                         historial_clicks = []
+                    
         Dibujo_Estado_Juego(screen, juego, array, array2, historial_clicks)
         reloj.tick(max_FPS)
         p.display.flip()
 
+def promotion(objeto2, mov):
+    if objeto2.fila == 0 or objeto2.fila == 7:
+        objeto2.promotion = True
+        if objeto2.promotion == True and objeto2.tipo == "P":
+            altotemp = 256
+            anchotemp = 256
+            screen1 = p.display.set_mode(
+                (anchotemp, altotemp))  # Genera el display
+            reloj1 = p.time.Clock()
+            screen1.fill(white)
+            if objeto2.color == "w":
+                seleccion = Estado_promotion_w()
+            else:
+                seleccion = Estado_promotion_b()
+            promoted = True
+            dimension_temp = 2
+            SQ_size_temp = anchotemp // dimension_temp
+            imagenesG = {}
+            piezas = ["wR", "wN", "wB", "wQ"]
+            piezas += ["bR", "bN", "bB", "bQ"]
+            for pieza in piezas:
+                imagen = p.image.load("imagenes/" + pieza + ".png")
+                imagenesG[pieza] = p.transform.scale(
+                    imagen, (SQ_size_temp, SQ_size_temp))
+            while promoted:
+                ubicacion_mouse1 = p.mouse.get_pos()
+                colum = int(ubicacion_mouse1[0]//SQ_size_temp)
+                fil = int(ubicacion_mouse1[1]//SQ_size_temp)
+                for e in p.event.get():
+                    if e.type == p.QUIT:
+                        promoted = False
+                    elif e.type == p.MOUSEBUTTONDOWN:  # Detecta click del mouse
+                        screen1 = p.display.set_mode((ancho, alto))
+                        return seleccion.board[fil][colum]
+                colores = [white, brown]
+                for f in range(dimension_temp):  # f: fila
+                    for c in range(dimension_temp):  # c: columna
+                        if colum == c and fil == f:
+                            color = green
+                        else:
+                            color = colores[((f+c) % 2)]
+                        left = c * SQ_size_temp
+                        top = f * SQ_size_temp
+                        p.draw.rect(screen1, color, p.Rect(
+                            left, top, SQ_size_temp, SQ_size_temp))
+                for f in range(dimension_temp):  # f:fila
+                    for c in range(dimension_temp):  # c:columna
+                        pieza1 = seleccion.board[f][c]
+                        rectangulo1 = p.Rect(
+                            c * SQ_size_temp, f * SQ_size_temp, SQ_size_temp, SQ_size_temp)
+                        screen1.blit(imagenesG[pieza1], rectangulo1)
+                reloj1.tick(max_FPS)
+                p.display.flip()
+        else:
+            return mov
+    else:
+        return mov
 
 # Función responsable de mostrar la interfaz
 def Dibujo_Estado_Juego(screen, juego, cas_avail, cas_take, historial_clicks):
@@ -164,9 +242,13 @@ def Dibuja_Piezas(screen, board):
 
 
 # Verifica que la combinación entre la primera posición escogida y la segunda sea válida
-def Valida(historial_clicks, cas_avail, cas_take):
+def Valida(historial_clicks, cas_avail, cas_take, color, array,primerMovimiento):
     if historial_clicks[1] in cas_avail or historial_clicks[1] in cas_take:
-        return True
+        if primerMovimiento==1:
+            if array.items[-1].color != color:
+                return True
+        else:
+            return True
 
 
 # Esta función va a mostrar de color verde claro los posibles movimientos que pueden realizar las piezas
@@ -192,12 +274,13 @@ def Posibles(screen, cas_avail, cas_take):
 
 
 # Verifica cual pieza es la casilla escogida y crea un objeto
-def CrearObjeto(Primer_click, board):
+def CrearObjeto(Primer_click, board, array):
     color = board[Primer_click[0]][Primer_click[1]][0]
+    #print(color,"",board[Primer_click[0]][Primer_click[1]])
     fila = Primer_click[0]
     col = Primer_click[1]
     if board[Primer_click[0]][Primer_click[1]][1] == "P":
-        objeto = pawn("P", color, fila, col, [], [], board)
+        objeto = pawn("P", color, fila, col, [], [], board, array)
     elif board[Primer_click[0]][Primer_click[1]][1] == "B":
         objeto = bishop("B", color, fila, col, [], [], board)
     elif board[Primer_click[0]][Primer_click[1]][1] == "R":
@@ -207,8 +290,18 @@ def CrearObjeto(Primer_click, board):
     elif board[Primer_click[0]][Primer_click[1]][1] == "N":
         objeto = knight("N", color, fila, col, [], [], board)
     elif board[Primer_click[0]][Primer_click[1]][1] == "K":
-        objeto = king("K", color, fila, col, [], [], board)
+        objeto = king("K", color, fila, col, [], [], board,array)
     return objeto
+
+def crear_array_objetos(array:pila, board):
+    for i in range(0,8):
+        for j in range(0,8):
+            lista=[0,0]
+            lista[0]=i 
+            lista[1]=j 
+            if board[i][j] != "--":
+                objeto1=CrearObjeto(lista,board,array)
+                array.apilar(objeto1)
 
 # Para que se ejecute solo cuando corro este archivo.py
 if __name__ == "__main__":

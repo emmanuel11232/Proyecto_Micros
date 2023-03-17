@@ -21,11 +21,36 @@ class Estado_Juego():
         self.mueve_blanco = True
         self.registro_movimiento = []  # Move log
 
-    def Jugada(self, movimiento):
+    def Jugada(self, movimiento, passant,objeto):
         # Se "mueven" las piezas
+        
         self.board[movimiento.start_fila][movimiento.start_colum] = "--"
         pos_final = movimiento.pieza_movida
         self.board[movimiento.end_fila][movimiento.end_colum] = pos_final
+        if passant:
+            if objeto.color == "w":
+                self.board[movimiento.end_fila+1][movimiento.end_colum] = "--"
+
+            else:
+                self.board[movimiento.end_fila-1][movimiento.end_colum] = "--"
+        if objeto.enroqueCorto==True and (movimiento.end_colum==6 or movimiento.end_colum==2) and objeto.tipo=="K":
+            if objeto.color == "w":
+                self.board[7][7] = "--"
+                self.board[7][5] = "wR"
+                movimiento.end_colum=6
+            if objeto.color == "b":
+                self.board[0][7] = "--"
+                self.board[0][5] = "bR"
+                movimiento.end_colum=6
+        if objeto.enroqueLargo==True and (movimiento.end_colum==6 or movimiento.end_colum==2) and objeto.tipo=="K":
+            if objeto.color == "w":
+                self.board[7][0] = "--"
+                self.board[7][3] = "wR"
+                movimiento.end_colum=2
+            if objeto.color == "b":
+                self.board[0][0] = "--"
+                self.board[0][3] = "bR"
+                movimiento.end_colum=2
         # Se almacena el movimiento realizado
         self.registro_movimiento.append(movimiento)
         # Esto es para que de fijo se tenga que mover una ficha negra después
@@ -75,3 +100,18 @@ class Movimiento():
     def letra_numero(self, fila, columna):
         # Devuelve la notación de ajedrez, primero columna y luego fila (ej:a1)
         return self.colums_to_files[columna] + self.rows_to_ranks[fila]
+    
+class Estado_promotion_b():
+    def __init__(self):
+        self.board = [
+            ["bQ", "bR"],
+            ["bB", "bN"],
+        ]
+
+
+class Estado_promotion_w():
+    def __init__(self):
+        self.board = [
+            ["wQ", "wR"],
+            ["wB", "wN"],
+        ]
