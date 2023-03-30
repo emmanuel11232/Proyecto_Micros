@@ -58,7 +58,8 @@ def main():
     cas_tomar = []
     primerMovimiento = [1, 1, 1, 1, 1, 1]
     juego.board, primerMovimiento = AsignarTablero(juego.board, primerMovimiento)
-    print(primerMovimiento)
+    juego_temporal.board = juego.board
+    print("Primer Movimiento:", primerMovimiento)
     historial_mov = [(0, 0), (0, 0)]
     vsPC = False
     TurnoPC = False
