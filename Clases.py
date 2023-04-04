@@ -38,8 +38,9 @@ class pawn(pieza):
             b = 1  # Fila inicial
         # Si la posición aledaña está vacía se asigna a su lista de
         # posiciones disponibles, la posición vieja se vacía.
-        if self.board[self.fila+a][self.col] == "--":
-            self.cas_avail.append((self.fila+a, self.col))
+        if self.fila + a < 8:
+            if self.board[self.fila+a][self.col] == "--":
+                self.cas_avail.append((self.fila+a, self.col))
         # Se revisa si está en posición inicial del pawn y de ser
         # así le permite moverse dos hacia delante.
         if self.fila == b:
@@ -57,13 +58,13 @@ class pawn(pieza):
 
         # Revisa si es posible comer hacia la diagonal que va
         # a la izquierda del tablero
-        if (self.col != 7 and self.color == "b") or self.color == "w":
+        if ((self.col != 7 and self.color == "b") or self.color == "w") and self.fila < 7:
             if self.board[self.fila+a][self.col+a] != "--" and self.board[self.fila+a][self.col+a][0] != self.color:
                 self.cas_take.append((self.fila+a, self.col+a))
 
         # Revisa si es posible comer hacia la diagonal que va
         # a la derecha del tablero
-        if (self.col != 7 and self.color == "w") or self.color == "b":
+        if ((self.col != 7 and self.color == "w") or self.color == "b") and self.fila > 0 and self.fila<7:
             if self.board[self.fila+a][self.col-a] != "--" and self.board[self.fila+a][self.col-a][0] != self.color:
                 self.cas_take.append((self.fila+a, self.col-a))
 
@@ -383,9 +384,9 @@ class king(pieza):
                 self.cas_take.append((self.fila-1, self.col-1))
 
         # Revisa si se cumplen las condiciones iniciales de las piezas, así
-        # como los espacios necesarios para enrocas, de ser así enciende
+        # como los espacios necesarios para enrocar, de ser así enciende
         # las booleanas de enroqueCorto o enroqueLargo.
-        if self.tipo == "K" and self.color == "w" and self.primerMovimiento[0] == 1:
+        if self.tipo == "K" and self.color == "w" and self.primerMovimiento[0] == 1 and self.col == 4:
             if self.board[self.fila][self.col+1] == "--" and self.board[self.fila][self.col+2] == "--":
                 if self.board[self.fila][self.col+3] == "wR" and self.primerMovimiento[2] == 1:
                     self.cas_avail.append((self.fila, self.col+2))
@@ -394,7 +395,7 @@ class king(pieza):
                 if self.board[self.fila][self.col-4] == "wR" and self.primerMovimiento[3] == 1:
                     self.cas_avail.append((self.fila, self.col-2))
                     self.enroqueLargo = True
-        if self.tipo == "K" and self.color == "b" and self.primerMovimiento[1] == 1:
+        if self.tipo == "K" and self.color == "b" and self.primerMovimiento[1] == 1 and self.col == 4:
             if self.board[self.fila][self.col+1] == "--" and self.board[self.fila][self.col+2] == "--":
                 if self.board[self.fila][self.col+3] == "bR" and self.primerMovimiento[4] == 1:
                     self.cas_avail.append((self.fila, self.col+2))
@@ -431,17 +432,17 @@ class king(pieza):
         # Quita la posibilidad de enrocar si la posición aledaña al rey,
         # del lado que se va a enrocar, está siendo atacada.
         if self.color == "w":
-            if self.enroqueCorto and not ((7, 5) in self.cas_avail):
+            if self.enroqueCorto and not ((7, 5) in self.cas_avail) and ((7, 6) in self.cas_avail):
                 self.enroqueCorto = False
                 self.cas_avail.remove((7, 6))
-            if self.enroqueLargo and not ((7, 3) in self.cas_avail):
+            if self.enroqueLargo and not ((7, 3) in self.cas_avail) and ((7, 2) in self.cas_avail):
                 self.enroqueCorto = False
                 self.cas_avail.remove((7, 2))
         elif self.color == "b":
-            if self.enroqueCorto and not ((0, 5) in self.cas_avail):
+            if self.enroqueCorto and not ((0, 5) in self.cas_avail) and ((0, 6) in self.cas_avail):
                 self.enroqueCorto = False
                 self.cas_avail.remove((0, 6))
-            if self.enroqueLargo and not ((0, 3) in self.cas_avail):
+            if self.enroqueLargo and not ((0, 3) in self.cas_avail) and ((0, 2) in self.cas_avail):
                 self.enroqueCorto = False
                 self.cas_avail.remove((0, 2))
 

@@ -55,7 +55,7 @@ class Estado_Juego():
         # VARIABLE, LE PUEDO PONER UN IF PARA QUE SOLO PUEDA MOVER UNA BLANCA
         # Y LUEGO SOLO PUEDA MOVER UNA NEGRA PERO ESTO CAMBIA SI EN UNA JUGADA
         # SE PUEDEN MOVER 2 PIEZAS BLANCAS AL MISMO TIEMPO
-        self.mueve_blanco = not self.mueve_blanco
+        # self.mueve_blanco = not self.mueve_blanco
 
 
 class Movimiento():
