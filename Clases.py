@@ -72,14 +72,15 @@ class pawn(pieza):
         # la casilla a cas_take para que se pinte de amarillo y también la
         # agrega a cuadro_alpaso que se usa posteriormente para retirar
         # al peón que se comió.
-        if self.historial_mov != []:
-            if self.board[self.historial_mov[1][0]][self.historial_mov[1][1]][1] == "P":
-                if (self.fila == 3) and (self.color == "w") and ((self.historial_mov[1][0] - self.historial_mov[0][0]) == 2):
+        if self.board[self.historial_mov[1][0]][self.historial_mov[1][1]][1] == "P":
+            if (self.fila == 3) and (self.color == "w") and ((self.historial_mov[1][0] - self.historial_mov[0][0]) == 2):
+                if abs(self.col-self.historial_mov[1][1]) == 1:
                     self.cas_take.append(
                         (self.historial_mov[1][0] - 1, self.historial_mov[1][1]))
                     self.cuadro_alpaso = (
                         (self.historial_mov[1][0] - 1, self.historial_mov[1][1]))
-                elif (self.fila == 4) and (self.color == "b") and ((self.historial_mov[0][0] - self.historial_mov[1][0]) == 2):
+            elif (self.fila == 4) and (self.color == "b") and ((self.historial_mov[0][0] - self.historial_mov[1][0]) == 2):
+                if abs(self.col-self.historial_mov[1][1]) == 1:
                     self.cas_take.append(
                         (self.historial_mov[1][0] + 1, self.historial_mov[1][1]))
                     self.cuadro_alpaso = (
