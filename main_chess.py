@@ -1,7 +1,7 @@
 import copy
 import pygame as p
-from chess_assistant import Estado_Juego, Movimiento, Estado_promotion_b, cambiar_board
-from chess_assistant import Estado_promotion_w
+from chess_assistant import Estado_Juego, Movimiento, Estado_promotion_b
+from chess_assistant import Estado_promotion_w, cambiar_board
 from Clases import pawn, bishop, rook, queen, knight, king
 import random
 
@@ -47,31 +47,32 @@ def load_images():
 # El driver principal del código, se encarga de recibir las entradas del
 # usuario y de actualizar los graficos
 def main():
+    random.seed()
+    running = True
     TurnoPC = False
-    screen = p.display.set_mode((ancho, alto))  # Genera el display
-    reloj = p.time.Clock()
-    screen.fill(white)
-    load_images()
-    juego = Estado_Juego()
-    juego_temporal = Estado_Juego()  # Para revisar check en posibles movs.
     cas_disp = []  # Se usa para pintar verde
     cas_tomar = []  # Se usa para pintar amarillo
     primerMovimiento = [1, 1, 1, 1, 1, 1]  # Matriz que define si ya se
     # movieron por primera vez las piezas relacionadas con el enroque.
-    # "inicia" define el color que empieza, se define el tablero y primerMovimie.
-    inicia, juego.board, primerMovimiento = AsignarTablero(juego.board, primerMovimiento)
     historial_mov = [(0, 0), (0, 0)]  # Guarda el último movimiento válido.
-    ValidosenCheck = []
-    jaque = "-"  # "-": no jaque, 1 en jaque blanco, 2 en jaque negro
+    jaque = "-"  # "-": no jaque, 1 en jaque blanco, 2 en jaque`` negro
     jaquemate = False
-    global casilla_reyenjaque
-    casilla_reyenjaque = []
     cuadro_selec = ()  # Tupla (fila, columna) que Va a iniciar vacía,
     # porque no hay ningún cuadro seleccionado, además, guarda la
     # información del último click del usuario
     historial_clicks = []  # 2 Tuplas (fila, columna) que guardan la
     # información de donde el usuario hizo click. EJ: [(6,4),(4,4)]
-    random.seed()
+    juego = Estado_Juego()
+    casilla_reyenjaque = []
+
+    # Tiene que ver con pygame
+    screen = p.display.set_mode((ancho, alto))  # Genera el display
+    reloj = p.time.Clock()
+    screen.fill(white)
+    load_images()
+
+    # "inicia" define el color inicial, se define el tablero y primerMovimiento
+    inicia, juego.board, primerMovimiento = AsignarTablero(juego.board, primerMovimiento)
     equipo, vsPC = EscogerModo()  # Equipo define con quien juega el usuario
     # y vsPC el modo de juego.
     color = equipo  # Color controla cual equipo puede mover en el turno.
@@ -85,21 +86,30 @@ def main():
             color = "b"
         else:
             color = "w"
-    running = True
-
+    if color == "b": coloratacante = "w"
+    else: coloratacante = "b"
+    jaque = check(juego.board, coloratacante, historial_mov, primerMovimiento)
+    if jaque != "-":
+        jaquemate = checkmate(juego.board, historial_mov, primerMovimiento, coloratacante)
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
             # Detecta click del mouse
-            elif e.type == p.MOUSEBUTTONDOWN or (vsPC and TurnoPC):
+            elif (e.type == p.MOUSEBUTTONDOWN or (vsPC and TurnoPC)) and not jaquemate:
                 if not TurnoPC:
                     ubicacion_mouse = p.mouse.get_pos()  # Posición (x,y) del mouse
-
                     # Variables para obtener la fila y la columna donde está el
                     # mouse y cual pieza se eligió
                     columna = ubicacion_mouse[0]//SQ_size
                     fila = ubicacion_mouse[1]//SQ_size
+
+                    # Arregla el bug, cuando se escoge justo el límite de
+                    # la pantalla y se sale del rango la elección.
+                    if columna == 8:
+                        columna = 7
+                    if fila == 8:
+                        fila = 7
 
                     # Caso en que haya seleccionado el mismo cuadro 2 veces
                     if cuadro_selec == (fila, columna):
@@ -119,11 +129,11 @@ def main():
 
                     # Si sólo se tiene seleccionada la pieza con el 1er click
                     # Se crea un objeto con los atributos de la pieza escogida
-                    # Guarda cas_disp y cas_tomar que son necesarias para pintar el
-                    # tablero.
+                    # Guarda cas_disp y cas_tomar que son necesarias para
+                    # pintar el tablero.
                         if len(historial_clicks) == 1:
-                            objeto1 = CrearObjeto(
-                                historial_clicks[0], juego.board, historial_mov, primerMovimiento, ValidosenCheck, jaque, juego_temporal)
+                            casilla_reyenjaque, objeto1 = CrearObjeto(
+                                historial_clicks[0], juego.board, historial_mov, primerMovimiento)
                             cas_disp = objeto1.cas_avail
                             cas_tomar = objeto1.cas_take
                 else:  # Si es el turno de la PC
@@ -139,8 +149,8 @@ def main():
                         # caso de no tener ninguna, escoge otra casilla
                         if (juego.board[pcfila][pccol] != "--" and juego.board[pcfila][pccol][0] != equipo):
                             historial_clicks.append((pcfila, pccol))
-                            objeto1 = CrearObjeto(
-                                (pcfila, pccol), juego.board, historial_mov, primerMovimiento, ValidosenCheck, jaque, juego_temporal)
+                            casilla_reyenjaque, objeto1 = CrearObjeto(
+                                (pcfila, pccol), juego.board, historial_mov, primerMovimiento)
                             cas_disp = objeto1.cas_avail
                             cas_tomar = objeto1.cas_take
                             rand = random.randint(0, 1)
@@ -159,7 +169,7 @@ def main():
                 if len(historial_clicks) == 2:
                     # El if corrobora que la combinación de las dos elecciones
                     # es válida, es decir, que es un movimiento legal.
-                    if Valida(historial_clicks, juego_temporal, historial_mov, juego.board, objeto1, color, primerMovimiento):
+                    if Valida(historial_clicks, historial_mov, juego.board, objeto1, color, primerMovimiento):
                         # Se utiliza la clase "Movimiento", que permite
                         # llevar un mejor orden, permite ver la notación.
                         mov_in = historial_clicks[0]
@@ -187,23 +197,7 @@ def main():
                         # se haya dado el primer movimiento en una de las
                         # piezas que afectan el enroque.
                         # REY BLANCO
-                        if juego.board[7][4] == "--" and primerMovimiento[0]:
-                            primerMovimiento[0] = 0
-                        # REY NEGRO
-                        if juego.board[0][4] == "--" and primerMovimiento[1]:
-                            primerMovimiento[1] = 0
-                        # TORRE BLANCA DERECHA
-                        if juego.board[7][7] == "--" and primerMovimiento[2]:
-                            primerMovimiento[2] = 0
-                        # TORRE BLANCA IZQUIERDA
-                        if juego.board[7][0] == "--" and primerMovimiento[3]:
-                            primerMovimiento[3] = 0
-                        # TORRE NEGRA DERECHA
-                        if juego.board[0][7] == "--" and primerMovimiento[4]:
-                            primerMovimiento[4] = 0
-                        # TORRE NEGRA IZQUIERDA
-                        if juego.board[0][0] == "--" and primerMovimiento[5]:
-                            primerMovimiento[5] = 0
+                        primerMovimiento = primerMov(juego.board, primerMovimiento)
 
                         # Revisa si bajo las condiciones actuales, existe un
                         # jaque para el próximo equipo.
@@ -212,10 +206,7 @@ def main():
                         # Si hay check, entonces define cuál es la lista de
                         # movimientos válidos para el próximo equipo.
                         if jaque != "-":
-                            ValidosenCheck = MovValidosCheck(
-                                juego.board, juego_temporal, historial_mov, ValidosenCheck, primerMovimiento)
-                        jaquemate = checkmate(juego.board, historial_mov, ValidosenCheck, primerMovimiento)
-
+                            jaquemate = checkmate(juego.board, historial_mov, primerMovimiento, color)
                         # Si se juega vsPC, se pasa el turno al oponente.
                         if vsPC:
                             TurnoPC = not TurnoPC
@@ -238,7 +229,10 @@ def main():
                     # del usuario y el historial de clicks.
                     cuadro_selec = ()
                     historial_clicks = []
-            elif e.type == p.KEYDOWN:
+            # Función de saltar turno
+            elif (e.type == p.KEYDOWN) and not jaquemate:
+                # Invierte el color al que le toca jugar y en caso de estar
+                # jugando contra la PC, le da el turno a la PC de nuevo.
                 if e.key == p.K_s:
                     if color == "w":
                         color = "b"
@@ -251,14 +245,46 @@ def main():
         # como los colores correspondientes en las otras casillas
         Dibujo_Estado_Juego(screen, juego, cas_disp,
                             cas_tomar, historial_clicks)
+
+        # Si se llega al jaque mate, lo muestra en pantalla hasta que
+        # se salga de la ventana.
         if jaquemate:
             vsPC = False
             p.font.init()
             font = p.font.Font('freesansbold.ttf', 35)
             texto = font.render('Jaque Mate', True, darkred)
+            if jaque == 1:
+                texto2 = font.render('Gana negro', True, darkred)
+                screen.blit(texto2, (150, 230))
+            else:
+                texto2 = font.render('Gana blanco', True, darkred)
+                screen.blit(texto2, (140, 230))
             screen.blit(texto, (150, 200))
         reloj.tick(max_FPS)
         p.display.flip()
+
+
+# Revisa si el movimiento que se acaba de realizar afecta a la
+# matriz de primerMovimiento.
+def primerMov(board, primerMovimiento):
+    if board[7][4] == "--" and primerMovimiento[0]:
+        primerMovimiento[0] = 0
+    # REY NEGRO
+    if board[0][4] == "--" and primerMovimiento[1]:
+        primerMovimiento[1] = 0
+    # TORRE BLANCA DERECHA
+    if board[7][7] == "--" and primerMovimiento[2]:
+        primerMovimiento[2] = 0
+    # TORRE BLANCA IZQUIERDA
+    if board[7][0] == "--" and primerMovimiento[3]:
+        primerMovimiento[3] = 0
+    # TORRE NEGRA DERECHA
+    if board[0][7] == "--" and primerMovimiento[4]:
+        primerMovimiento[4] = 0
+    # TORRE NEGRA IZQUIERDA
+    if board[0][0] == "--" and primerMovimiento[5]:
+        primerMovimiento[5] = 0
+    return primerMovimiento
 
 
 def EscogerModo():
@@ -315,7 +341,6 @@ def EscogerModo():
 # Función encargada de realizar la coronación del pawn.
 # Recibe a los atributos de la pieza actual para comprobar
 # que cumple con las condiciones para realizar el promotion
-
 def promotion(objeto2, mov):
 
     # Comprueba que la pieza se encuentre en las dos únicas filas posibles
@@ -480,8 +505,8 @@ def Posibles(screen, cas_avail, cas_take):
 # Verifica que la combinación entre la primera posición escogida
 # y la segunda sea válida, también se encarga de llevar los turnos puesto que
 # sólo permite que sean intercalados y con blanco de primero.
-def Valida(historial_clicks, juego_temporal, historial_mov, board, objeto, color, primerMovimiento):
-
+def Valida(historial_clicks, historial_mov, board, objeto, color, primerMovimiento):
+    juego_temporal = Estado_Juego()
     # Si la casilla escogida es una disponible, o una donde se puede comer y
     # además es el turno de las piezas de ese color, se permite el movimiento
     if (historial_clicks[1] in objeto.cas_avail or (historial_clicks[1] in objeto.cas_take)) and (color == objeto.color):
@@ -506,8 +531,10 @@ def Valida(historial_clicks, juego_temporal, historial_mov, board, objeto, color
 
 
 # Verifica cual pieza es la casilla escogida y crea un objeto
-def CrearObjeto(Primer_click, board, historial_mov, primerMovimiento, ValidosenCheck, jaque, juego_temporal):
+def CrearObjeto(Primer_click, board, historial_mov, primerMovimiento):
+    juego_temporal = Estado_Juego()  # Para revisar check en posibles movs.
     color = board[Primer_click[0]][Primer_click[1]][0]
+    casilla_reyenjaque = []
     if color == "w":
         coloratacante = "b"
     else:
@@ -564,28 +591,8 @@ def CrearObjeto(Primer_click, board, historial_mov, primerMovimiento, ValidosenC
             quitar2.append(disponible)
     for h in quitar2:
         objeto.cas_take.remove(h)
-
-    quitar3 = []
-    quitar4 = []
-    if (jaque == 1 and objeto.color == "w") or (jaque == 2 and objeto.color == "b"):
-        # Esta lista representa las movidas que no son válidos en check
-        for i in objeto.cas_avail:
-            j = ((objeto.fila, objeto.col), i)
-            if j not in ValidosenCheck:
-                quitar3.append(i)
-        for h in quitar3:
-            objeto.cas_avail.remove(h)
-
-        # Esta lista representa las comidas que no son válidos en check
-        for i in objeto.cas_take:
-            j = ((objeto.fila, objeto.col), i)
-            if j not in ValidosenCheck:
-                quitar4.append(i)
-        for h in quitar4:
-            objeto.cas_take.remove(h)
-    global casilla_reyenjaque
-    casilla_reyenjaque += quitar1 + quitar2 + quitar3 + quitar4
-    return objeto
+    casilla_reyenjaque += quitar1 + quitar2
+    return casilla_reyenjaque, objeto
 
 
 # Esta función simplemente revisa si alguna pieza está atacando al rey
@@ -634,30 +641,23 @@ def check(board, color, historial_mov, primerMovimiento):
 
 
 # Revisa el checkmate
-def checkmate(board, historial_mov, ValidosenCheck, primerMovimiento):
+def checkmate(board, historial_mov, primerMovimiento, color):
     # Si el rey está siendo atacado y no se puede salvar sólo, jaque mate.
-
-    # Define a cual rey se le va a consultar el jaque
-    if historial_mov != ():
-        color = board[historial_mov[1][0]][historial_mov[1][1]][0]
-    else:
-        color = "w"
+    ValidosenCheck = MovValidosCheck(board, historial_mov, primerMovimiento, color)
     if (check(board, color, historial_mov, primerMovimiento) != "-") and ValidosenCheck == []:
-        print("Jaque mate")
         return True
     else:
         return False
 
 
-def MovValidosCheck(board, juego_temporal, historial_mov, ValidosenCheck, primerMovimiento):
+# Esta función se llama desde la función de checkmate y crea un arreglo con
+# todos los posibles movimientos que se pueden realizar una vez
+# que se está en jaque.
+def MovValidosCheck(board, historial_mov, primerMovimiento, color):
+    juego_temporal = Estado_Juego()
     ValidosenCheck = []
     a = 0
     b = 0
-    if historial_mov != ():
-        color = board[historial_mov[1][0]][historial_mov[1][1]][0]
-    else:
-        color = "b"
-    # Va casilla por casilla del tablero.
     for a in range(8):
         for b in range(8):
             if color != board[a][b][0]:
@@ -747,6 +747,7 @@ def AsignarTablero(board, primerMovimiento1):
     return inicia, board, primerMovimiento1
 
 
+# Permite definir el tablero inicial, en caso de que no sea el inicial.
 def cambiarBoard(board, primerMovimiento_temp):
     load_images()
     altotemp = 640
@@ -1133,6 +1134,9 @@ def cambiarBoard(board, primerMovimiento_temp):
         p.display.flip()
 
 
+# Le pregunta al usuario, si en el tablero planteado, la pieza colocada ya ha
+# realizado un movimiento anterior. Esto se usa para discriminar
+# un posible enroque.
 def preguntaPrimerMov(anchotemp_original, altotemp_original):
     altotemp = 256
     anchotemp = 512
@@ -1186,6 +1190,9 @@ def preguntaPrimerMov(anchotemp_original, altotemp_original):
     return colum
 
 
+# Pregunta qué color debe de iniciar, esto en caso de no
+# usar un tablero inicial. Si se le da x a la venta, se
+# define el color blanco como defecto.
 def quieninicia():
     altotemp = 256
     anchotemp = 512
@@ -1213,12 +1220,12 @@ def quieninicia():
 
     # Se obtiene cuál fue la selección del usuario y se retorna
     while corriendo:
-        ubicacion_mouse1 = p.mouse.get_pos()
-        colum = int(ubicacion_mouse1[0]//SQ_size_temp)
+        colum = False
         for e in p.event.get():
             if e.type == p.QUIT:
                 corriendo = False
             elif e.type == p.MOUSEBUTTONDOWN:
+                ubicacion_mouse1 = p.mouse.get_pos()
                 colum = int(ubicacion_mouse1[0]//SQ_size_temp)
                 corriendo = False
     screen1 = p.display.set_mode((640, 512))
@@ -1230,6 +1237,8 @@ def quieninicia():
     return colum
 
 
+# Le permite escoger al usuario con cuál color desea jugar. Si se 
+# cierra la ventana, se escoge blanco por defecto
 def escogerequipo():
     altotemp = 256
     anchotemp = 512
@@ -1257,12 +1266,12 @@ def escogerequipo():
 
     # Se obtiene cuál fue la selección del usuario y se retorna
     while corriendo:
-        ubicacion_mouse1 = p.mouse.get_pos()
-        colum = int(ubicacion_mouse1[0]//SQ_size_temp)
+        colum = False
         for e in p.event.get():
             if e.type == p.QUIT:
                 corriendo = False
             elif e.type == p.MOUSEBUTTONDOWN:
+                ubicacion_mouse1 = p.mouse.get_pos()
                 colum = int(ubicacion_mouse1[0]//SQ_size_temp)
                 corriendo = False
     # screen2 = p.display.set_mode((640, 512))
@@ -1274,6 +1283,8 @@ def escogerequipo():
     return colum
 
 
+# Una vez que se cierra la ventana, le pregunta al usuario si
+# desea volver a jugar.
 def gameover():
     altotemp = 256
     anchotemp = 512

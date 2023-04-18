@@ -1,5 +1,4 @@
-from chess_assistant import Estado_Juego, Movimiento
-import copy
+from chess_assistant import Estado_Juego
 juego_temporal = Estado_Juego()
 
 
@@ -72,19 +71,21 @@ class pawn(pieza):
         # la casilla a cas_take para que se pinte de amarillo y también la
         # agrega a cuadro_alpaso que se usa posteriormente para retirar
         # al peón que se comió.
-        if self.board[self.historial_mov[1][0]][self.historial_mov[1][1]][1] == "P":
-            if (self.fila == 3) and (self.color == "w") and ((self.historial_mov[1][0] - self.historial_mov[0][0]) == 2):
-                if abs(self.col-self.historial_mov[1][1]) == 1:
-                    self.cas_take.append(
-                        (self.historial_mov[1][0] - 1, self.historial_mov[1][1]))
-                    self.cuadro_alpaso = (
-                        (self.historial_mov[1][0] - 1, self.historial_mov[1][1]))
-            elif (self.fila == 4) and (self.color == "b") and ((self.historial_mov[0][0] - self.historial_mov[1][0]) == 2):
-                if abs(self.col-self.historial_mov[1][1]) == 1:
-                    self.cas_take.append(
-                        (self.historial_mov[1][0] + 1, self.historial_mov[1][1]))
-                    self.cuadro_alpaso = (
-                        self.historial_mov[1][0] + 1, self.historial_mov[1][1])
+        if self.historial_mov != []:
+            if self.board[self.historial_mov[1][0]][self.historial_mov[1][1]][1] == "P":
+                if (self.fila == 3) and (self.color == "w") and ((self.historial_mov[1][0] - self.historial_mov[0][0]) == 2):
+                    if abs(self.col-self.historial_mov[1][1]) == 1:
+                        self.cas_take.append(
+                            (self.historial_mov[1][0] - 1, self.historial_mov[1][1]))
+                        self.cuadro_alpaso = (
+                            (self.historial_mov[1][0] - 1, self.historial_mov[1][1]))
+
+                elif (self.fila == 4) and (self.color == "b") and ((self.historial_mov[0][0] - self.historial_mov[1][0]) == 2):
+                    if abs(self.col-self.historial_mov[1][1]) == 1:
+                        self.cas_take.append(
+                            (self.historial_mov[1][0] + 1, self.historial_mov[1][1]))
+                        self.cuadro_alpaso = (
+                            self.historial_mov[1][0] + 1, self.historial_mov[1][1])
 
 
 class bishop(pieza):
@@ -408,30 +409,30 @@ class king(pieza):
 
         # Revisa si en las posiciones disponibles, se caería en un
         # jaque y de ser así las quita del arreglo.
-        for disponible in self.cas_avail:
-            juego_temporal.board = copy.deepcopy(self.board)
-            mov = Movimiento((self.fila, self.col),
-                             disponible, juego_temporal.board)
-            juego_temporal.Jugada(mov, self)
-            if self.check(juego_temporal.board):
-                quitar_avail.append(disponible)
-        for h in quitar_avail:
-            self.cas_avail.remove(h)
+        #for disponible in self.cas_avail:
+        #    juego_temporal.board = copy.deepcopy(self.board)
+        #    mov = Movimiento((self.fila, self.col),
+        #                     disponible, juego_temporal.board)
+        #    juego_temporal.Jugada(mov, self)
+        #    if self.check(juego_temporal.board):
+        #        quitar_avail.append(disponible)
+        #for h in quitar_avail:
+        #    self.cas_avail.remove(h)
 
         # Revisa si en las posiciones disponibles para comer del rey
         # se caería en un jaque y de ser así las quita del arreglo.
-        for disponible in self.cas_take:
-            juego_temporal.board = copy.deepcopy(self.board)
-            mov = Movimiento((self.fila, self.col),
-                             disponible, juego_temporal.board)
-            juego_temporal.Jugada(mov, self)
-            if self.check(juego_temporal.board):
-                quitar_take.append(disponible)
-        for r in quitar_take:
-            self.cas_take.remove(r)
+        #for disponible in self.cas_take:
+        #    juego_temporal.board = copy.deepcopy(self.board)
+        #    mov = Movimiento((self.fila, self.col),
+        #                     disponible, juego_temporal.board)
+        #    juego_temporal.Jugada(mov, self)
+        #    if self.check(juego_temporal.board):
+        #        quitar_take.append(disponible)
+        #for r in quitar_take:
+        #    self.cas_take.remove(r)
 
         # Quita la posibilidad de enrocar si la posición aledaña al rey,
-        # del lado que se va a enrocar, está siendo atacada.
+        # del lado que se va a enrocar, está siendo atacada u ocupada.
         if self.color == "w":
             if self.enroqueCorto and not ((7, 5) in self.cas_avail) and ((7, 6) in self.cas_avail):
                 self.enroqueCorto = False
