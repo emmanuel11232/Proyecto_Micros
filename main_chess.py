@@ -8,7 +8,7 @@ import random
 
 # Colores del tablero
 white = p.Color("white")
-brown = 0x01579b
+blue = 0x01579b
 # Colores para movimientos permitidos
 lightgreen = 0x81c784
 green = 0x43a047
@@ -64,12 +64,16 @@ def main():
     # información de donde el usuario hizo click. EJ: [(6,4),(4,4)]
     juego = Estado_Juego()
     casilla_reyenjaque = []
+    # Variables globales para indicarle al usuario los errores de movimientos
+    font_error = p.font.Font('freesansbold.ttf', 25)
+    error = " "
 
     # Tiene que ver con pygame
     screen = p.display.set_mode((ancho, alto))  # Genera el display
     reloj = p.time.Clock()
     screen.fill(white)
     load_images()
+
 
     # "inicia" define el color inicial, se define el tablero y primerMovimiento
     inicia, juego.board, primerMovimiento = AsignarTablero(juego.board, primerMovimiento)
@@ -98,6 +102,12 @@ def main():
             # Detecta click del mouse
             elif (e.type == p.MOUSEBUTTONDOWN or (vsPC and TurnoPC)) and not jaquemate:
                 if not TurnoPC:
+                    # Se limpia el mensaje de error en un movimiento
+                    # de la interfaz
+                    error = " "
+                    mensaje = font_error.render(error, True, p.Color("red"))
+                    screen.blit(mensaje, (0, 240))
+                    
                     ubicacion_mouse = p.mouse.get_pos()  # Posición (x,y) del mouse
                     # Variables para obtener la fila y la columna donde está el
                     # mouse y cual pieza se eligió
@@ -220,11 +230,14 @@ def main():
                     # Si el movimiento no fue válido:
                     else:
                         if historial_clicks[1] in casilla_reyenjaque:
+                            error = "Inválido por rey en jaque"
                             print("Inválido por rey en jaque")
                         elif color != objeto1.color:
+                            error = "No corresponde al turno"
                             print("No corresponde al turno")
                         else:
-                            print("Inválido porque el movimiento no corresponde con la pieza")
+                            error = "Movimiento inválido para la pieza"
+                            print("El movimiento no corresponde con la pieza")
                     # Se resetean las variables que guardan el último click
                     # del usuario y el historial de clicks.
                     cuadro_selec = ()
@@ -245,6 +258,13 @@ def main():
         # como los colores correspondientes en las otras casillas
         Dibujo_Estado_Juego(screen, juego, cas_disp,
                             cas_tomar, historial_clicks)
+        # Se imprimen en pantalla los mensajes de movimientos inválidos
+        mensaje = font_error.render(error, True, p.Color("red"))
+        mensaje1 = font_error.render(error, True, black)
+        left = 150 - 2*len(error)
+        screen.blit(mensaje1, (left-1, 239))
+        screen.blit(mensaje1, (left+1, 241))
+        screen.blit(mensaje, (left, 240))
 
         # Si se llega al jaque mate, lo muestra en pantalla hasta que
         # se salga de la ventana.
@@ -252,13 +272,26 @@ def main():
             vsPC = False
             p.font.init()
             font = p.font.Font('freesansbold.ttf', 35)
-            texto = font.render('Jaque Mate', True, darkred)
+            font2 = p.font.Font('freesansbold.ttf', 20)
+            texto_fondo1 = font.render('Jaque Mate', True, p.Color("red"))
+            texto_fondo2 = font.render('Jaque Mate', True, p.Color("green"))
+            texto = font.render('Jaque Mate', True, black)
             if jaque == 1:
-                texto2 = font.render('Gana negro', True, darkred)
-                screen.blit(texto2, (150, 230))
+                texto2_fondo = font2.render('Gana negro', True, p.Color("red"))
+                texto2_fondo1 = font2.render('Gana negro', True, p.Color("green"))
+                texto2 = font2.render('Gana negro', True, black)
+                screen.blit(texto2_fondo, (181, 241))
+                screen.blit(texto2_fondo1, (179, 239))
+                screen.blit(texto2, (180, 240))
             else:
-                texto2 = font.render('Gana blanco', True, darkred)
-                screen.blit(texto2, (140, 230))
+                texto2_fondo = font2.render('Gana blanco', True, p.Color("red"))
+                texto2_fondo1 = font2.render('Gana blanco', True, p.Color("green"))
+                texto2 = font2.render('Gana blanco', True, black)
+                screen.blit(texto2_fondo, (181, 241))
+                screen.blit(texto2_fondo1, (179, 239))
+                screen.blit(texto2, (180, 240))
+            screen.blit(texto_fondo1, (151, 201))
+            screen.blit(texto_fondo2, (149, 199))
             screen.blit(texto, (150, 200))
         reloj.tick(max_FPS)
         p.display.flip()
@@ -409,7 +442,7 @@ def promotion(objeto2, mov):
                         screen1 = p.display.set_mode((ancho, alto))
                         return seleccion.board[fil][colum]
 
-                colores = [white, brown]
+                colores = [white, blue]
                 for f in range(dimension_temp):  # f: fila
                     for c in range(dimension_temp):  # c: columna
                         if colum == c and fil == f:
@@ -452,7 +485,7 @@ def Dibujo_Estado_Juego(screen, juego, cas_avail, cas_take, historial_clicks):
 
 # Dibuja los cuadrados del tablero en el orden de aparición en la interfaz
 def Dibuja_Tablero(screen):
-    colores = [white, brown]
+    colores = [white, blue]
     for f in range(dimension):  # f: fila
         for c in range(dimension):  # c: columna
             color = colores[((f+c) % 2)]
@@ -1105,11 +1138,11 @@ def cambiarBoard(board, primerMovimiento_temp):
             p.draw.rect(screen1, red, p.Rect(left, top, SQ_size_temp, SQ_size_temp))
             p.display.flip()
 
-        colores = [white, brown]
+        colores = [white, blue]
         for f in range(dimension_temp):  # f: fila
             for c in range(dimension_temp-2):  # c: columna
                 if f == 8:
-                    color = brown
+                    color = blue
                 elif f == 9:
                     color = white
                 else:
