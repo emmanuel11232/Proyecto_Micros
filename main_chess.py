@@ -533,6 +533,7 @@ def Posibles(screen, cas_avail, cas_take):
         left = cas_take[i][1]*SQ_size  # Define la fila
         top = cas_take[i][0]*SQ_size  # Define la columna
         p.draw.rect(screen, color, p.Rect(left, top, SQ_size, SQ_size))
+    if isinstance(objeto, pawn)
 
 
 # Verifica que la combinación entre la primera posición escogida
@@ -577,17 +578,17 @@ def CrearObjeto(Primer_click, board, historial_mov, primerMovimiento):
     # Cada uno de los condicionales revisa que tipo de pieza escogió el usuario
     # y crea un objeto con los atributos que pide dicha clase
     if board[Primer_click[0]][Primer_click[1]][1] == "P":
-        objeto = pawn("P", color, fila, col, [], [], board, historial_mov)
+        objeto = pawn("P", color, fila, col, board, historial_mov)
     elif board[Primer_click[0]][Primer_click[1]][1] == "B":
-        objeto = bishop("B", color, fila, col, [], [], board)
+        objeto = bishop("B", color, fila, col, board)
     elif board[Primer_click[0]][Primer_click[1]][1] == "R":
-        objeto = rook("R", color, fila, col, [], [], board)
+        objeto = rook("R", color, fila, col, board)
     elif board[Primer_click[0]][Primer_click[1]][1] == "Q":
-        objeto = queen("Q", color, fila, col, [], [], board)
+        objeto = queen("Q", color, fila, col, board)
     elif board[Primer_click[0]][Primer_click[1]][1] == "N":
-        objeto = knight("N", color, fila, col, [], [], board)
+        objeto = knight("N", color, fila, col, board)
     elif board[Primer_click[0]][Primer_click[1]][1] == "K":
-        objeto = king("K", color, fila, col, [], [], board, primerMovimiento)
+        objeto = king("K", color, fila, col, board, primerMovimiento)
     # Se asegura de que las posiciones disponibles no caerían en un jaque dado
     # por el otro rey, esto se revisa aquí y no en la clase porque
     # habría una recursividad infinita.
@@ -642,17 +643,17 @@ def check(board, color, historial_mov, primerMovimiento):
             if color == board[a][b][0]:
                 if board[a][b][1] == "P":
                     objeto = pawn("P", board[a][b][0],
-                                  a, b, [], [], board, historial_mov)
+                                  a, b, board, historial_mov)
                 elif board[a][b][1] == "B":
-                    objeto = bishop("B", board[a][b][0], a, b, [], [], board)
+                    objeto = bishop("B", board[a][b][0], a, b, board)
                 elif board[a][b][1] == "R":
-                    objeto = rook("R", board[a][b][0], a, b, [], [], board)
+                    objeto = rook("R", board[a][b][0], a, b, board)
                 elif board[a][b][1] == "Q":
-                    objeto = queen("Q", board[a][b][0], a, b, [], [], board)
+                    objeto = queen("Q", board[a][b][0], a, b, board)
                 elif board[a][b][1] == "N":
-                    objeto = knight("N", board[a][b][0], a, b, [], [], board)
+                    objeto = knight("N", board[a][b][0], a, b, board)
                 elif board[a][b][1] == "K":
-                    objeto = king("K", color, a, b, [], [], board, primerMovimiento)
+                    objeto = king("K", color, a, b, board, primerMovimiento)
                 if board[a][b] != "--":
                     if objeto.cas_take != []:
                         for t in objeto.cas_take:
@@ -696,18 +697,17 @@ def MovValidosCheck(board, historial_mov, primerMovimiento, color):
             if color != board[a][b][0]:
                 if board[a][b][1] == "P":
                     objeto = pawn("P", board[a][b][0],
-                                  a, b, [], [], board, historial_mov)
+                                  a, b, board, historial_mov)
                 elif board[a][b][1] == "B":
-                    objeto = bishop("B", board[a][b][0], a, b, [], [], board)
+                    objeto = bishop("B", board[a][b][0], a, b, board)
                 elif board[a][b][1] == "R":
-                    objeto = rook("R", board[a][b][0], a, b, [], [], board)
+                    objeto = rook("R", board[a][b][0], a, b, board)
                 elif board[a][b][1] == "Q":
-                    objeto = queen("Q", board[a][b][0], a, b, [], [], board)
+                    objeto = queen("Q", board[a][b][0], a, b, board)
                 elif board[a][b][1] == "N":
-                    objeto = knight("N", board[a][b][0], a, b, [], [], board)
+                    objeto = knight("N", board[a][b][0], a, b, board)
                 elif board[a][b][1] == "K":
-                    objeto = king("K", board[a][b][0], a, b, [
-                    ], [], board, primerMovimiento)
+                    objeto = king("K", board[a][b][0], a, b, board, primerMovimiento)
                 if board[a][b] != "--":
                     for disponible in objeto.cas_avail:
                         juego_temporal.board = copy.deepcopy(board)

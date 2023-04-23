@@ -1,4 +1,5 @@
-from chess_assistant import Estado_Juego
+import copy
+from chess_assistant import Estado_Juego, Movimiento
 juego_temporal = Estado_Juego()
 
 
@@ -6,7 +7,7 @@ juego_temporal = Estado_Juego()
 class pieza:
     # promotion = False
 
-    def __init__(self, tipo, color, fila, col, cas_avail, cas_take, board):
+    def __init__(self, tipo, color, fila, col, board):
         self.tipo = " "  # Define cuál pieza es
         self.color = color
         self.fila = fila
@@ -17,9 +18,9 @@ class pieza:
 
 
 class pawn(pieza):
-    def __init__(self, tipo, color, fila, col, cas_avail, cas_take,
+    def __init__(self, tipo, color, fila, col,
                  board, historial_mov):
-        super().__init__(tipo, color, fila, col, cas_avail, cas_take, board)
+        super().__init__(tipo, color, fila, col, board)
         self.tipo = tipo
         self.cuadro_alpaso = ()
         self.historial_mov = historial_mov
@@ -57,13 +58,13 @@ class pawn(pieza):
 
         # Revisa si es posible comer hacia la diagonal que va
         # a la izquierda del tablero
-        if ((self.col != 7 and self.color == "b") or self.color == "w") and self.fila < 7:
+        if ((self.col != 7 and self.color == "b") or (self.color == "w" and self.col != 0)) and self.fila > 0 and self.fila < 7:
             if self.board[self.fila+a][self.col+a] != "--" and self.board[self.fila+a][self.col+a][0] != self.color:
                 self.cas_take.append((self.fila+a, self.col+a))
 
         # Revisa si es posible comer hacia la diagonal que va
         # a la derecha del tablero
-        if ((self.col != 7 and self.color == "w") or self.color == "b") and self.fila > 0 and self.fila<7:
+        if ((self.col != 7 and self.color == "w") or (self.color == "b" and self.col !=0)) and self.fila > 0 and self.fila < 7:
             if self.board[self.fila+a][self.col-a] != "--" and self.board[self.fila+a][self.col-a][0] != self.color:
                 self.cas_take.append((self.fila+a, self.col-a))
 
@@ -75,23 +76,19 @@ class pawn(pieza):
             if self.board[self.historial_mov[1][0]][self.historial_mov[1][1]][1] == "P":
                 if (self.fila == 3) and (self.color == "w") and ((self.historial_mov[1][0] - self.historial_mov[0][0]) == 2):
                     if abs(self.col-self.historial_mov[1][1]) == 1:
-                        self.cas_take.append(
-                            (self.historial_mov[1][0] - 1, self.historial_mov[1][1]))
-                        self.cuadro_alpaso = (
-                            (self.historial_mov[1][0] - 1, self.historial_mov[1][1]))
+                        self.cas_take.append((self.historial_mov[1][0] - 1, self.historial_mov[1][1]))
+                        self.cuadro_alpaso = ((self.historial_mov[1][0] - 1, self.historial_mov[1][1]))
 
                 elif (self.fila == 4) and (self.color == "b") and ((self.historial_mov[0][0] - self.historial_mov[1][0]) == 2):
                     if abs(self.col-self.historial_mov[1][1]) == 1:
-                        self.cas_take.append(
-                            (self.historial_mov[1][0] + 1, self.historial_mov[1][1]))
-                        self.cuadro_alpaso = (
-                            self.historial_mov[1][0] + 1, self.historial_mov[1][1])
+                        self.cas_take.append((self.historial_mov[1][0] + 1, self.historial_mov[1][1]))
+                        self.cuadro_alpaso = (self.historial_mov[1][0] + 1, self.historial_mov[1][1])
 
 
 class bishop(pieza):
 
-    def __init__(self, tipo, color, fila, col, cas_avail, cas_take, board):
-        super().__init__(tipo, color, fila, col, cas_avail, cas_take, board)
+    def __init__(self, tipo, color, fila, col, board):
+        super().__init__(tipo, color, fila, col, board)
         self.tipo = tipo
         self.get_cas_avail_take()
 
@@ -147,8 +144,8 @@ class bishop(pieza):
 
 class rook(pieza):
 
-    def __init__(self, tipo, color, fila, col, cas_avail, cas_take, board):
-        super().__init__(tipo, color, fila, col, cas_avail, cas_take, board)
+    def __init__(self, tipo, color, fila, col, board):
+        super().__init__(tipo, color, fila, col, board)
         self.tipo = tipo
         self.get_cas_avail_take()
 
@@ -192,8 +189,8 @@ class rook(pieza):
 
 class queen(pieza):
 
-    def __init__(self, tipo, color, fila, col, cas_avail, cas_take, board):
-        super().__init__(tipo, color, fila, col, cas_avail, cas_take, board)
+    def __init__(self, tipo, color, fila, col, board):
+        super().__init__(tipo, color, fila, col, board)
         self.tipo = tipo
         self.get_cas_avail_take()
 
@@ -277,8 +274,8 @@ class queen(pieza):
 
 class knight(pieza):
 
-    def __init__(self, tipo, color, fila, col, cas_avail, cas_take, board):
-        super().__init__(tipo, color, fila, col, cas_avail, cas_take, board)
+    def __init__(self, tipo, color, fila, col, board):
+        super().__init__(tipo, color, fila, col, board)
         self.tipo = tipo
         self.enroque = []
         self.get_cas_avail_take()
@@ -329,9 +326,9 @@ class knight(pieza):
 
 
 class king(pieza):
-    def __init__(self, tipo, color, fila, col, cas_avail, cas_take,
+    def __init__(self, tipo, color, fila, col,
                  board, primerMovimiento):
-        super().__init__(tipo, color, fila, col, cas_avail, cas_take, board)
+        super().__init__(tipo, color, fila, col, board)
         self.tipo = tipo
         self.enroqueCorto = False
         self. enroqueLargo = False
@@ -339,9 +336,7 @@ class king(pieza):
         self.get_cas_avail_take()
 
     def get_cas_avail_take(self):
-        quitar_avail = []
-        quitar_take = []
-
+        juego_temporal = Estado_Juego()
         # Revisa las 8 posiciones aledañas del rey para ver si es
         # posible desplazarse o comer en estas
         if self.fila + 1 <= 7:
@@ -387,66 +382,53 @@ class king(pieza):
 
         # Revisa si se cumplen las condiciones iniciales de las piezas, así
         # como los espacios necesarios para enrocar, de ser así enciende
-        # las booleanas de enroqueCorto o enroqueLargo.
-        if self.tipo == "K" and self.color == "w" and self.primerMovimiento[0] == 1 and self.col == 4:
-            if self.board[self.fila][self.col+1] == "--" and self.board[self.fila][self.col+2] == "--":
-                if self.board[self.fila][self.col+3] == "wR" and self.primerMovimiento[2] == 1:
-                    self.cas_avail.append((self.fila, self.col+2))
-                    self.enroqueCorto = True
-            if self.board[self.fila][self.col-1] == "--" and self.board[self.fila][self.col-2] == "--" and self.board[self.fila][self.col-3] == "--":
-                if self.board[self.fila][self.col-4] == "wR" and self.primerMovimiento[3] == 1:
-                    self.cas_avail.append((self.fila, self.col-2))
-                    self.enroqueLargo = True
-        if self.tipo == "K" and self.color == "b" and self.primerMovimiento[1] == 1 and self.col == 4:
-            if self.board[self.fila][self.col+1] == "--" and self.board[self.fila][self.col+2] == "--":
-                if self.board[self.fila][self.col+3] == "bR" and self.primerMovimiento[4] == 1:
-                    self.cas_avail.append((self.fila, self.col+2))
-                    self.enroqueCorto = True
-            if self.board[self.fila][self.col-1] == "--" and self.board[self.fila][self.col-2] == "--" and self.board[self.fila][self.col-3] == "--":
-                if self.board[self.fila][self.col-4] == "bR" and self.primerMovimiento[5] == 1:
-                    self.cas_avail.append((self.fila, self.col-2))
-                    self.enroqueLargo = True
-
-        # Revisa si en las posiciones disponibles, se caería en un
-        # jaque y de ser así las quita del arreglo.
-        #for disponible in self.cas_avail:
-        #    juego_temporal.board = copy.deepcopy(self.board)
-        #    mov = Movimiento((self.fila, self.col),
-        #                     disponible, juego_temporal.board)
-        #    juego_temporal.Jugada(mov, self)
-        #    if self.check(juego_temporal.board):
-        #        quitar_avail.append(disponible)
-        #for h in quitar_avail:
-        #    self.cas_avail.remove(h)
-
-        # Revisa si en las posiciones disponibles para comer del rey
-        # se caería en un jaque y de ser así las quita del arreglo.
-        #for disponible in self.cas_take:
-        #    juego_temporal.board = copy.deepcopy(self.board)
-        #    mov = Movimiento((self.fila, self.col),
-        #                     disponible, juego_temporal.board)
-        #    juego_temporal.Jugada(mov, self)
-        #    if self.check(juego_temporal.board):
-        #        quitar_take.append(disponible)
-        #for r in quitar_take:
-        #    self.cas_take.remove(r)
-
-        # Quita la posibilidad de enrocar si la posición aledaña al rey,
-        # del lado que se va a enrocar, está siendo atacada u ocupada.
-        if self.color == "w":
-            if self.enroqueCorto and not ((7, 5) in self.cas_avail) and ((7, 6) in self.cas_avail):
-                self.enroqueCorto = False
-                self.cas_avail.remove((7, 6))
-            if self.enroqueLargo and not ((7, 3) in self.cas_avail) and ((7, 2) in self.cas_avail):
-                self.enroqueCorto = False
-                self.cas_avail.remove((7, 2))
-        elif self.color == "b":
-            if self.enroqueCorto and not ((0, 5) in self.cas_avail) and ((0, 6) in self.cas_avail):
-                self.enroqueCorto = False
-                self.cas_avail.remove((0, 6))
-            if self.enroqueLargo and not ((0, 3) in self.cas_avail) and ((0, 2) in self.cas_avail):
-                self.enroqueCorto = False
-                self.cas_avail.remove((0, 2))
+        # las booleanas de enroqueCorto o enroqueLargo. También verifica
+        # que no se caiga en jaque al llegar a esa posición, que no esté en
+        # jaque en ese momento y que las casillas por las que pasa el rey, 
+        # no estén siendo atacadas.
+        if self.col == 4:
+            if self.color == "w" and self.primerMovimiento[0]:
+                if self.board[self.fila][self.col+1] == "--" and self.board[self.fila][self.col+2] == "--":
+                    jaques = [False, False, False]
+                    for i in range(0, 3):
+                        juego_temporal.board = copy.deepcopy(self.board)
+                        mov = Movimiento((self.fila, self.col), (self.fila, self.col+i), juego_temporal.board)
+                        juego_temporal.Jugada(mov, self)
+                        jaques[i] = self.check(juego_temporal.board)
+                    if self.primerMovimiento[2] == 1 and True not in jaques:
+                        self.cas_avail.append((self.fila, self.col+2))
+                        self.enroqueCorto = True
+                if self.board[self.fila][self.col-1] == "--" and self.board[self.fila][self.col-2] == "--" and self.board[self.fila][self.col-3] == "--":
+                    jaques = [False, False, False]
+                    for i in range(0, 3):
+                        juego_temporal.board = copy.deepcopy(self.board)
+                        mov = Movimiento((self.fila, self.col), (self.fila, self.col-i), juego_temporal.board)
+                        juego_temporal.Jugada(mov, self)
+                        jaques[i] = self.check(juego_temporal.board)
+                    if self.primerMovimiento[3] == 1 and True not in jaques:
+                        self.cas_avail.append((self.fila, self.col-2))
+                        self.enroqueLargo = True
+            if self.color == "b" and self.primerMovimiento[1]:
+                if self.board[self.fila][self.col+1] == "--" and self.board[self.fila][self.col+2] == "--":
+                    jaques = [False, False, False]
+                    for i in range(0, 3):
+                        juego_temporal.board = copy.deepcopy(self.board)
+                        mov = Movimiento((self.fila, self.col), (self.fila, self.col+i), juego_temporal.board)
+                        juego_temporal.Jugada(mov, self)
+                        jaques[i] = self.check(juego_temporal.board)
+                    if self.primerMovimiento[4] == 1 and True not in jaques:
+                        self.cas_avail.append((self.fila, self.col+2))
+                        self.enroqueCorto = True
+                if self.board[self.fila][self.col-1] == "--" and self.board[self.fila][self.col-2] == "--" and self.board[self.fila][self.col-3] == "--":
+                    jaques = [False, False, False]
+                    for i in range(0, 3):
+                        juego_temporal.board = copy.deepcopy(self.board)
+                        mov = Movimiento((self.fila, self.col), (self.fila, self.col-i), juego_temporal.board)
+                        juego_temporal.Jugada(mov, self)
+                        jaques[i] = self.check(juego_temporal.board)
+                    if self.primerMovimiento[5] == 1 and True not in jaques:
+                        self.cas_avail.append((self.fila, self.col-2))
+                        self.enroqueLargo = True
 
     # Revisa si en la posición indicada del tablero se presenta un jaque.
     def check(self, board_temporal):
@@ -455,20 +437,19 @@ class king(pieza):
             for b in range(8):
                 if self.color != board_temporal[a][b][0]:
                     if board_temporal[a][b][1] == "P":
-                        objeto = pawn("P", board_temporal[a][b][0], a, b, [
-                        ], [], board_temporal, [])
+                        objeto = pawn("P", board_temporal[a][b][0], a, b, board_temporal, [])
                     elif board_temporal[a][b][1] == "B":
                         objeto = bishop(
-                            "B", board_temporal[a][b][0], a, b, [], [], board_temporal)
+                            "B", board_temporal[a][b][0], a, b, board_temporal)
                     elif board_temporal[a][b][1] == "R":
                         objeto = rook(
-                            "R", board_temporal[a][b][0], a, b, [], [], board_temporal)
+                            "R", board_temporal[a][b][0], a, b, board_temporal)
                     elif board_temporal[a][b][1] == "Q":
                         objeto = queen(
-                            "Q", board_temporal[a][b][0], a, b, [], [], board_temporal)
+                            "Q", board_temporal[a][b][0], a, b, board_temporal)
                     elif board_temporal[a][b][1] == "N":
                         objeto = knight(
-                            "N", board_temporal[a][b][0], a, b, [], [], board_temporal)
+                            "N", board_temporal[a][b][0], a, b, board_temporal)
                     elif board_temporal[a][b][1] == "K":
                         pass  # El rey nunca puede dar jaque
                     if board_temporal[a][b][1] != "K" and board_temporal[a][b] != "--":
@@ -481,6 +462,8 @@ class king(pieza):
                     col_rey = b
         if (fila_rey, col_rey) in total_take:
             return True
+        else:
+            return False
 
     # Se consultan todas las casillas donde se puede mover alguna pieza
     # y esto se utiliza para ver si coinciden con alguna de las que se
