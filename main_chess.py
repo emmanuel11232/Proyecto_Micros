@@ -198,7 +198,7 @@ def main():
                             objeto1.fila = mov_fin[0]
                             objeto1.col = mov_fin[1]
                             mov.pieza_movida = promotion(
-                                objeto1, mov.pieza_movida)
+                                objeto1, mov.pieza_movida, TurnoPC)
 
                         # Se actualiza el tablero con la jugada
                         juego.Jugada(mov, objeto1)
@@ -374,7 +374,7 @@ def EscogerModo():
 # Función encargada de realizar la coronación del pawn.
 # Recibe a los atributos de la pieza actual para comprobar
 # que cumple con las condiciones para realizar el promotion
-def promotion(objeto2, mov):
+def promotion(objeto2, mov, TurnoPC):
 
     # Comprueba que la pieza se encuentre en las dos únicas filas posibles
     # para realizar la coronación, es decir, la última fila posible para
@@ -385,20 +385,6 @@ def promotion(objeto2, mov):
     if objeto2.fila == 0 or objeto2.fila == 7:
         # Se comprueba que la pieza sea un pawn
         if objeto2.tipo == "P":
-            # Variables definen el tamaño de la interfaz de selección temporal
-            altotemp = 256
-            anchotemp = 256
-
-            screen1 = p.display.set_mode(
-                (anchotemp, altotemp+64))  # Genera el display con las dimensiones dadas
-            reloj1 = p.time.Clock()
-            screen1.fill(white)
-
-            p.font.init()
-            font = p.font.Font('freesansbold.ttf', 16)
-            texto = font.render(
-                'Seleccione la pieza deseada', True, black, white)
-            screen1.blit(texto, (16, 288))
 
             # Determina el color de la pieza que está realizando la coronación,
             # para generar una interfaz de selección acorde al color.
@@ -408,59 +394,80 @@ def promotion(objeto2, mov):
             else:
                 seleccion = Estado_promotion_b()
 
+            if TurnoPC:
+                colum = random.randint(0,1)
+                fil = random.randint(0,1)
+                return seleccion.board[fil][colum]
+            else:
+            # Variables definen el tamaño de la interfaz de selección temporal
+                altotemp = 256
+                anchotemp = 256
+
+                screen1 = p.display.set_mode(
+                    (anchotemp, altotemp+64))  # Genera el display con las dimensiones dadas
+                reloj1 = p.time.Clock()
+                screen1.fill(white)
+
+                p.font.init()
+                font = p.font.Font('freesansbold.ttf', 16)
+                texto = font.render(
+                    'Seleccione la pieza deseada', True, black, white)
+                screen1.blit(texto, (16, 288))
+
+    
             # Se inicializa el ciclo de estado que espera a la selección de la nueva pieza
-            promoted = True
-            dimension_temp = 2  # Es 2 ya que se va a generar una tablero de 2x2
-            SQ_size_temp = anchotemp // dimension_temp  # Se define la escala
+                promoted = True
+                dimension_temp = 2  # Es 2 ya que se va a generar una tablero de 2x2
+                SQ_size_temp = anchotemp // dimension_temp  # Se define la escala
 
             # Carga las imágenes desde la carpeta y las escala
-            imagenesG = {}
-            piezas = ["wR", "wN", "wB", "wQ"]
-            piezas += ["bR", "bN", "bB", "bQ"]
-            for pieza in piezas:
-                imagen = p.image.load("imagenes/" + pieza + ".png")
-                imagenesG[pieza] = p.transform.scale(
-                    imagen, (SQ_size_temp, SQ_size_temp))
+                imagenesG = {}
+                piezas = ["wR", "wN", "wB", "wQ"]
+                piezas += ["bR", "bN", "bB", "bQ"]
+                for pieza in piezas:
+                    imagen = p.image.load("imagenes/" + pieza + ".png")
+                    imagenesG[pieza] = p.transform.scale(
+                        imagen, (SQ_size_temp, SQ_size_temp))
 
-            while promoted:
+                while promoted:
 
                 # Detecta click del mouse
-                ubicacion_mouse1 = p.mouse.get_pos()
+                    ubicacion_mouse1 = p.mouse.get_pos()
 
                 # Variables para obtener la fila y la columna donde está el
                 # mouse y cual pieza se eligió
-                colum = int(ubicacion_mouse1[0]//SQ_size_temp)
-                fil = int(ubicacion_mouse1[1]//SQ_size_temp)
+                    colum = int(ubicacion_mouse1[0]//SQ_size_temp)
+                    fil = int(ubicacion_mouse1[1]//SQ_size_temp)
 
-                for e in p.event.get():
+                    for e in p.event.get():
 
                     # Espera a que el usuario dé click dentro del rango de selección
-                    if e.type == p.MOUSEBUTTONDOWN and ubicacion_mouse1[1] <= 256:
+                        if e.type == p.MOUSEBUTTONDOWN and ubicacion_mouse1[1] <= 256:
                         # Regresa a la pantalla a las dimensiones originales y retorna
                         # la pieza del tablero temporal de selección
                         # que coincida con la fila y columna seleccionada por el usuario
-                        screen1 = p.display.set_mode((ancho, alto))
-                        return seleccion.board[fil][colum]
+                            screen1 = p.display.set_mode((ancho, alto))
+                            return seleccion.board[fil][colum]
 
-                colores = [white, blue]
-                for f in range(dimension_temp):  # f: fila
-                    for c in range(dimension_temp):  # c: columna
-                        if colum == c and fil == f:
-                            color = green
-                        else:
-                            color = colores[((f+c) % 2)]
-                        left = c * SQ_size_temp
-                        top = f * SQ_size_temp
-                        p.draw.rect(screen1, color, p.Rect(
-                            left, top, SQ_size_temp, SQ_size_temp))
-                for f in range(dimension_temp):  # f:fila
-                    for c in range(dimension_temp):  # c:columna
-                        pieza1 = seleccion.board[f][c]
-                        rectangulo1 = p.Rect(
-                            c * SQ_size_temp, f * SQ_size_temp, SQ_size_temp, SQ_size_temp)
-                        screen1.blit(imagenesG[pieza1], rectangulo1)
-                reloj1.tick(max_FPS)
-                p.display.flip()
+                    colores = [white, blue]
+                    for f in range(dimension_temp):  # f: fila
+                        for c in range(dimension_temp):  # c: columna
+                            if colum == c and fil == f:
+                                color = green
+                            else:
+                                color = colores[((f+c) % 2)]
+                            left = c * SQ_size_temp
+                            top = f * SQ_size_temp
+                            p.draw.rect(screen1, color, p.Rect(
+                                left, top, SQ_size_temp, SQ_size_temp))
+                    for f in range(dimension_temp):  # f:fila
+                        for c in range(dimension_temp):  # c:columna
+                            pieza1 = seleccion.board[f][c]
+                            rectangulo1 = p.Rect(
+                                c * SQ_size_temp, f * SQ_size_temp, SQ_size_temp, SQ_size_temp)
+                            screen1.blit(imagenesG[pieza1], rectangulo1)
+                    reloj1.tick(max_FPS)
+                    p.display.flip()
         else:
             return mov
     else:
