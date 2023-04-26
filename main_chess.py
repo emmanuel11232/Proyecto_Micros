@@ -107,7 +107,7 @@ def main():
                     error = " "
                     mensaje = font_error.render(error, True, p.Color("red"))
                     screen.blit(mensaje, (0, 240))
-                    
+
                     ubicacion_mouse = p.mouse.get_pos()  # Posición (x,y) del mouse
                     # Variables para obtener la fila y la columna donde está el
                     # mouse y cual pieza se eligió
@@ -252,12 +252,15 @@ def main():
                     else:
                         color = "w"
                     if not TurnoPC and vsPC:
-                        TurnoPC = True
-
-        # Se encarga de pintar en pantalla el tablero, así
-        # como los colores correspondientes en las otras casillas
-        Dibujo_Estado_Juego(screen, juego, cas_disp,
-                            cas_tomar, historial_clicks)
+                        TurnoPC = True         
+        Dibuja_Tablero(screen)
+        # Dibuja los movimientos correspondientes a la pieza escogida
+        if len(historial_clicks) == 1:
+            Posibles(screen, cas_disp, cas_tomar)
+            Movimientos_Invalidos(screen, cas_disp, cas_tomar)
+            #if 'objeto1' in locals():
+            Dibuja_Jugadas_Especiales(screen, objeto1)
+        Dibuja_Piezas(screen, juego.board)
         # Se imprimen en pantalla los mensajes de movimientos inválidos
         mensaje = font_error.render(error, True, p.Color("red"))
         mensaje1 = font_error.render(error, True, black)
@@ -371,6 +374,43 @@ def EscogerModo():
     return equipo, colum
 
 
+# Pinta de turquesa la posibilidad de promoción, de morado la comida
+# al paso y de azul el enroque.
+def Dibuja_Jugadas_Especiales(screen, objeto1):
+    if isinstance(objeto1, pawn):
+        if objeto1.cuadro_alpaso != ():
+            left = objeto1.cuadro_alpaso[1] * SQ_size
+            top = objeto1.cuadro_alpaso[0] * SQ_size
+            p.draw.rect(screen, 0x8b008b, p.Rect(left, top, SQ_size, SQ_size))
+        elif objeto1.fila == 1 and objeto1.color == "w":
+            for mov in (objeto1.cas_avail + objeto1.cas_take):
+                left = mov[1] * SQ_size
+                top = mov[0] * SQ_size
+                p.draw.rect(screen, 0x30d5c8, p.Rect(left, top, SQ_size, SQ_size))
+        elif objeto1.fila == 6 and objeto1.color == "b":
+            for mov in (objeto1.cas_avail + objeto1.cas_take):
+                left = mov[1] * SQ_size
+                top = mov[0] * SQ_size
+                p.draw.rect(screen, 0x30d5c8, p.Rect(left, top, SQ_size, SQ_size))
+    elif isinstance(objeto1, king):
+        if objeto1.enroqueCorto and objeto1.color == "w":
+            left = 6 * SQ_size
+            top = 7 * SQ_size
+            p.draw.rect(screen, 0x0000ff, p.Rect(left, top, SQ_size, SQ_size))
+        elif objeto1.enroqueCorto and objeto1.color == "b":
+            left = 6 * SQ_size
+            top = 0 * SQ_size
+            p.draw.rect(screen, 0x0000ff, p.Rect(left, top, SQ_size, SQ_size))
+        if objeto1.enroqueLargo and objeto1.color == "w":
+            left = 2 * SQ_size
+            top = 7 * SQ_size
+            p.draw.rect(screen, 0x0000ff, p.Rect(left, top, SQ_size, SQ_size))
+        elif objeto1.enroqueLargo and objeto1.color == "b":
+            left = 2 * SQ_size
+            top = 0 * SQ_size
+            p.draw.rect(screen, 0x0000ff, p.Rect(left, top, SQ_size, SQ_size))
+
+
 # Función encargada de realizar la coronación del pawn.
 # Recibe a los atributos de la pieza actual para comprobar
 # que cumple con las condiciones para realizar el promotion
@@ -399,7 +439,7 @@ def promotion(objeto2, mov, TurnoPC):
                 fil = random.randint(0,1)
                 return seleccion.board[fil][colum]
             else:
-            # Variables definen el tamaño de la interfaz de selección temporal
+                # Variables definen el tamaño de la interfaz de selección temporal
                 altotemp = 256
                 anchotemp = 256
 
@@ -414,7 +454,6 @@ def promotion(objeto2, mov, TurnoPC):
                     'Seleccione la pieza deseada', True, black, white)
                 screen1.blit(texto, (16, 288))
 
-    
             # Se inicializa el ciclo de estado que espera a la selección de la nueva pieza
                 promoted = True
                 dimension_temp = 2  # Es 2 ya que se va a generar una tablero de 2x2
@@ -472,22 +511,6 @@ def promotion(objeto2, mov, TurnoPC):
             return mov
     else:
         return mov
-
-
-# Función responsable de mostrar la interfaz
-def Dibujo_Estado_Juego(screen, juego, cas_avail, cas_take, historial_clicks):
-    # Dibuja los cuadros del tablero.
-    Dibuja_Tablero(screen)
-
-    # Si ya se seleccionó una casilla, se pintan los movimientos
-    # válidos en verde o amarillo (si es posible comer) y los
-    # inválidos en rojo.
-    if len(historial_clicks) == 1:
-        Posibles(screen, cas_avail, cas_take)
-        Movimientos_Invalidos(screen, cas_avail, cas_take)
-
-    # Dibuja las piezas encima del tablero pintado anteriormente.
-    Dibuja_Piezas(screen, juego.board)
 
 
 # Dibuja los cuadrados del tablero en el orden de aparición en la interfaz
