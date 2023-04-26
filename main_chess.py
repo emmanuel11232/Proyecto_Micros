@@ -540,7 +540,6 @@ def Posibles(screen, cas_avail, cas_take):
         left = cas_take[i][1]*SQ_size  # Define la fila
         top = cas_take[i][0]*SQ_size  # Define la columna
         p.draw.rect(screen, color, p.Rect(left, top, SQ_size, SQ_size))
-    if isinstance(objeto, pawn)
 
 
 # Verifica que la combinación entre la primera posición escogida
