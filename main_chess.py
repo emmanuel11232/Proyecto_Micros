@@ -1,5 +1,8 @@
 import copy
 import pygame as p
+import threading
+import serial
+import time
 from chess_assistant import Estado_Juego, Movimiento, Estado_promotion_b
 from chess_assistant import Estado_promotion_w, cambiar_board
 from Clases import pawn, bishop, rook, queen, knight, king
@@ -30,7 +33,7 @@ dimension = 8  # Porque un tablero de ajerez es 8x8
 SQ_size = alto // dimension
 max_FPS = 15  # Variable necesaria para la animacion del juego
 imagenes = {}
-
+Tablero=Estado_Juego()
 
 # Se necesita que las imagenes del juego se carguen una sola vez, porque
 # si no, se va laggear el juego
@@ -40,7 +43,7 @@ def load_images():
     piezas = ["wP", "wR", "wN", "wB", "wK", "wQ"]
     piezas += ["bP", "bR", "bN", "bB", "bK", "bQ"]
     for pieza in piezas:
-        imagen = p.image.load("imagenes/" + pieza + ".png")
+        imagen = p.image.load("Imagenes/" + pieza + ".png")
         imagenes[pieza] = p.transform.scale(imagen, (SQ_size, SQ_size))
 
 
@@ -63,6 +66,8 @@ def main():
     historial_clicks = []  # 2 Tuplas (fila, columna) que guardan la
     # información de donde el usuario hizo click. EJ: [(6,4),(4,4)]
     juego = Estado_Juego()
+    # Se define la variable Tablero como variable global, usada para enviarla por UART al ESP32
+    global Tablero
     casilla_reyenjaque = []
     # Variables globales para indicarle al usuario los errores de movimientos
     font_error = p.font.Font('freesansbold.ttf', 25)
@@ -252,7 +257,8 @@ def main():
                     else:
                         color = "w"
                     if not TurnoPC and vsPC:
-                        TurnoPC = True         
+                        TurnoPC = True  
+        Tablero=juego       
         Dibuja_Tablero(screen)
         # Dibuja los movimientos correspondientes a la pieza escogida
         if len(historial_clicks) == 1:
@@ -334,8 +340,8 @@ def EscogerModo():
     screen1.fill(white)
 
     # Carga las imágenes desde la carpeta y las escala
-    img1 = p.image.load("imagenes/" + "PC" + ".png")
-    img2 = p.image.load("imagenes/" + "Asistente" + ".png")
+    img1 = p.image.load("Imagenes/" + "PC" + ".png")
+    img2 = p.image.load("Imagenes/" + "Asistente" + ".png")
     img1 = p.transform.scale(img1, (SQ_size_temp, SQ_size_temp))
     img2 = p.transform.scale(img2, (SQ_size_temp*0.9, SQ_size_temp*0.55))
 
@@ -464,7 +470,7 @@ def promotion(objeto2, mov, TurnoPC):
                 piezas = ["wR", "wN", "wB", "wQ"]
                 piezas += ["bR", "bN", "bB", "bQ"]
                 for pieza in piezas:
-                    imagen = p.image.load("imagenes/" + pieza + ".png")
+                    imagen = p.image.load("Imagenes/" + pieza + ".png")
                     imagenesG[pieza] = p.transform.scale(
                         imagen, (SQ_size_temp, SQ_size_temp))
 
@@ -768,8 +774,8 @@ def AsignarTablero(board, primerMovimiento1):
     screen1.fill(white)
 
     # Carga las imágenes desde la carpeta y las escala
-    img1 = p.image.load("imagenes/" + "Asignar" + ".png")
-    img2 = p.image.load("imagenes/" + "Basic" + ".png")
+    img1 = p.image.load("Imagenes/" + "Asignar" + ".png")
+    img2 = p.image.load("Imagenes/" + "Basic" + ".png")
     img1 = p.transform.scale(img1, (SQ_size_temp//2, SQ_size_temp//2))
     img2 = p.transform.scale(img2, (SQ_size_temp//2, SQ_size_temp//2))
 
@@ -1209,8 +1215,8 @@ def preguntaPrimerMov(anchotemp_original, altotemp_original):
     screen1.fill(white)
 
     # Carga las imágenes desde la carpeta y las escala
-    img1 = p.image.load("imagenes/" + "no" + ".png")
-    img2 = p.image.load("imagenes/" + "yes" + ".png")
+    img1 = p.image.load("Imagenes/" + "no" + ".png")
+    img2 = p.image.load("Imagenes/" + "yes" + ".png")
     img1 = p.transform.scale(img1, (SQ_size_temp//2, SQ_size_temp//2))
     img2 = p.transform.scale(img2, (SQ_size_temp//2, SQ_size_temp//2))
 
@@ -1356,8 +1362,8 @@ def gameover():
     reloj1 = p.time.Clock()
     screen1.fill(white)
     # Carga las imágenes desde la carpeta y las escala
-    img1 = p.image.load("imagenes/" + "yes" + ".png")
-    img2 = p.image.load("imagenes/" + "no" + ".png")
+    img1 = p.image.load("Imagenes/" + "yes" + ".png")
+    img2 = p.image.load("Imagenes/" + "no" + ".png")
     img1 = p.transform.scale(img1, (SQ_size_temp//2, SQ_size_temp//2))
     img2 = p.transform.scale(img2, (SQ_size_temp//2, SQ_size_temp//2))
 
@@ -1399,9 +1405,44 @@ def gameover():
     return colum
 
 
-# Para que se ejecute solo cuando corro este archivo.py
-if __name__ == "__main__":
+#Se crea la función para establecer comunicación con el ESP32
+def comunicacion():
+    if __name__ == '__main__':
+        #Se asigna el baudrate y puerto para comunicación serial
+        ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
+        ser.reset_input_buffer()
+        #Se tienen dos ciclos principales, uno de comunicación y otro para el main
+        #Se necesita que los dos se ejecuten al mismo tiempo, por lo que se recurre
+        #Al uso de threads
+        while True:
+            Matriz = Tablero
+            DataString = ''
+            #Se crea un string de datos para poder codificarlo y enviarlo
+            for x in Matriz:
+                for j in x:
+                    DataString += j
+            DataString += '\n' #Se indica el final de la codificacion
+            ser.write(DataString.encode('utf-8')) #Se envian los datos mediante el puerto serial
+            line = ser.readline().decode('utf-8').rstrip() #Se lee lo recibido en el ESP32 (Eliminar después)
+            print(line)
+            time.sleep(1)
+
+def cicloPrincipal():
     jugando = True
     while jugando:
         main()
         jugando = gameover()
+
+
+# Para que se ejecute solo cuando corro este archivo.py
+if __name__ == "__main__":
+    #Se establecen los hilos
+    hilo1 = threading.Thread(target=cicloPrincipal)
+    hilo2 = threading.Thread(target=comunicacion)
+    # Iniciar los hilos
+    hilo1.start()
+    hilo2.start()
+
+    # Esperar a que los hilos terminen (nunca sucederá en este caso ya que son ciclos infinitos)
+    hilo1.join()
+    hilo2.join()
