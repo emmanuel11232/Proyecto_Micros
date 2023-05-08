@@ -34,6 +34,7 @@ SQ_size = alto // dimension
 max_FPS = 15  # Variable necesaria para la animacion del juego
 imagenes = {}
 Tablero=Estado_Juego()
+saltar_turno_ESP32 = False
 
 # Se necesita que las imagenes del juego se carguen una sola vez, porque
 # si no, se va laggear el juego
@@ -68,6 +69,7 @@ def main():
     juego = Estado_Juego()
     # Se define la variable Tablero como variable global, usada para enviarla por UART al ESP32
     global Tablero
+    
     casilla_reyenjaque = []
     # Variables globales para indicarle al usuario los errores de movimientos
     font_error = p.font.Font('freesansbold.ttf', 25)
@@ -257,7 +259,14 @@ def main():
                     else:
                         color = "w"
                     if not TurnoPC and vsPC:
-                        TurnoPC = True  
+                        TurnoPC = True
+        if (saltar_turno_ESP32 == True) and not jaquemate:
+            if color == "w":
+                color = "b"
+            else:
+                color = "w"
+            if not TurnoPC and vsPC:
+                TurnoPC = True
         Tablero=juego       
         Dibuja_Tablero(screen)
         # Dibuja los movimientos correspondientes a la pieza escogida
@@ -1425,6 +1434,9 @@ def comunicacion():
             ser.write(DataString.encode('utf-8')) #Se envian los datos mediante el puerto serial
             line = ser.readline().decode('utf-8').rstrip() #Se lee lo recibido en el ESP32 (Eliminar después)
             print(line)
+            if "saltar_turno" in line:
+                saltar_turno_ESP32 = True
+                ser.reset_input_buffer
             time.sleep(1)
 
 def cicloPrincipal():
