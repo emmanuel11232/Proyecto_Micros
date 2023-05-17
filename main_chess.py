@@ -10,19 +10,19 @@ import random
 
 
 # Colores del tablero
-white = p.Color("white")
+white = p.Color('white')
 blue = 0x01579b
 # Colores para movimientos permitidos
 lightgreen = 0x81c784
 green = 0x43a047
 # Color para comer
-yellow = p.Color("yellow")
+yellow = p.Color('yellow')
 # Colores para movimientos no permitidos
 red = 0xffab91
-darkred = p.Color("red")
+darkred = p.Color('red')
 
 # Color de texto
-black = p.Color("black")
+black = p.Color('black')
 
 p.init()  # Inicialización de pygame
 
@@ -34,6 +34,7 @@ SQ_size = alto // dimension
 max_FPS = 15  # Variable necesaria para la animacion del juego
 imagenes = {}
 Tablero=Estado_Juego()
+saltar_turno_ESP32 = False
 
 # Se necesita que las imagenes del juego se carguen una sola vez, porque
 # si no, se va laggear el juego
@@ -68,6 +69,7 @@ def main():
     juego = Estado_Juego()
     # Se define la variable Tablero como variable global, usada para enviarla por UART al ESP32
     global Tablero
+    global saltar_turno_ESP32
     casilla_reyenjaque = []
     # Variables globales para indicarle al usuario los errores de movimientos
     font_error = p.font.Font('freesansbold.ttf', 25)
@@ -257,7 +259,19 @@ def main():
                     else:
                         color = "w"
                     if not TurnoPC and vsPC:
-                        TurnoPC = True  
+                        TurnoPC = True
+                
+            elif (saltar_turno_ESP32 == True) and not jaquemate:
+                saltar_turno_ESP32 = False
+                if color == "w":
+                    color = "b"
+                    saltar_turno_ESP32 = False
+                else:
+                    color = "w"
+                    saltar_turno_ESP32 = False
+                if not TurnoPC and vsPC:
+                    TurnoPC = True
+                    saltar_turno_ESP32 = False
         Tablero=juego       
         Dibuja_Tablero(screen)
         # Dibuja los movimientos correspondientes a la pieza escogida
@@ -327,8 +341,6 @@ def primerMov(board, primerMovimiento):
     if board[0][0] == "--" and primerMovimiento[5]:
         primerMovimiento[5] = 0
     return primerMovimiento
-
-
 def EscogerModo():
     equipo = "w"
     altotemp = 256
@@ -343,7 +355,7 @@ def EscogerModo():
     img1 = p.image.load("Imagenes/" + "PC" + ".png")
     img2 = p.image.load("Imagenes/" + "Asistente" + ".png")
     img1 = p.transform.scale(img1, (SQ_size_temp, SQ_size_temp))
-    img2 = p.transform.scale(img2, (SQ_size_temp*0.9, SQ_size_temp*0.55))
+    img2 = p.transform.scale(img2, (int(SQ_size_temp*0.9), int(SQ_size_temp*0.55)))
 
     # Se genera un rectangulo para poner la imagen encima
     rectangulo1 = p.Rect(15, 65, SQ_size_temp, SQ_size_temp)
@@ -351,8 +363,8 @@ def EscogerModo():
     # Se generan dos rectangulos para pintar el fondo
     rectangulo2 = p.Rect(0, 0, SQ_size_temp, SQ_size_temp)
     rectangulo3 = p.Rect(SQ_size_temp, 0, SQ_size_temp, SQ_size_temp)
-    p.draw.rect(screen1, "white", rectangulo2)
-    p.draw.rect(screen1, "blue", rectangulo3)
+    p.draw.rect(screen1, white, rectangulo2)
+    p.draw.rect(screen1, blue, rectangulo3)
 
     # Pinta las imágenes
     screen1.blit(img1, rectangulo3)
@@ -786,8 +798,8 @@ def AsignarTablero(board, primerMovimiento1):
     # Se generan dos rectangulos para pintar el fondo
     rectangulo3 = p.Rect(0, 0, SQ_size_temp, SQ_size_temp)
     rectangulo4 = p.Rect(SQ_size_temp, 0, SQ_size_temp, SQ_size_temp)
-    p.draw.rect(screen1, "white", rectangulo3)
-    p.draw.rect(screen1, "blue", rectangulo4)
+    p.draw.rect(screen1, white, rectangulo3)
+    p.draw.rect(screen1, blue, rectangulo4)
 
     # Pinta las imágenes
     screen1.blit(img1, rectangulo2)
@@ -1273,8 +1285,8 @@ def quieninicia():
     # Se generan dos rectangulos para pintar el fondo
     rectangulo3 = p.Rect(0, 0, SQ_size_temp, SQ_size_temp)
     rectangulo4 = p.Rect(SQ_size_temp, 0, SQ_size_temp, SQ_size_temp)
-    p.draw.rect(screen1, "white", rectangulo3)
-    p.draw.rect(screen1, "black", rectangulo4)
+    p.draw.rect(screen1, white, rectangulo3)
+    p.draw.rect(screen1, black, rectangulo4)
 
     p.font.init()
     font = p.font.Font('freesansbold.ttf', 16)
@@ -1319,8 +1331,8 @@ def escogerequipo():
     # Se generan dos rectangulos para pintar el fondo
     rectangulo3 = p.Rect(0, 0, SQ_size_temp, SQ_size_temp)
     rectangulo4 = p.Rect(SQ_size_temp, 0, SQ_size_temp, SQ_size_temp)
-    p.draw.rect(screen2, "white", rectangulo3)
-    p.draw.rect(screen2, "black", rectangulo4)
+    p.draw.rect(screen2, white, rectangulo3)
+    p.draw.rect(screen2, black, rectangulo4)
 
     p.font.init()
     font = p.font.Font('freesansbold.ttf', 16)
@@ -1374,8 +1386,8 @@ def gameover():
     # Se generan dos rectangulos para pintar el fondo
     rectangulo3 = p.Rect(0, 0, SQ_size_temp, SQ_size_temp)
     rectangulo4 = p.Rect(SQ_size_temp, 0, SQ_size_temp, SQ_size_temp)
-    p.draw.rect(screen1, "white", rectangulo3)
-    p.draw.rect(screen1, "white", rectangulo4)
+    p.draw.rect(screen1, white, rectangulo3)
+    p.draw.rect(screen1, white, rectangulo4)
 
     # Pinta las imágenes
     screen1.blit(img1, rectangulo2)
@@ -1407,6 +1419,8 @@ def gameover():
 
 #Se crea la función para establecer comunicación con el ESP32
 def comunicacion():
+    global saltar_turno_ESP32
+    global Tablero
     if __name__ == '__main__':
         #Se asigna el baudrate y puerto para comunicación serial
         ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
@@ -1415,7 +1429,7 @@ def comunicacion():
         #Se necesita que los dos se ejecuten al mismo tiempo, por lo que se recurre
         #Al uso de threads
         while True:
-            Matriz = Tablero
+            Matriz = Tablero.board
             DataString = ''
             #Se crea un string de datos para poder codificarlo y enviarlo
             for x in Matriz:
@@ -1425,7 +1439,10 @@ def comunicacion():
             ser.write(DataString.encode('utf-8')) #Se envian los datos mediante el puerto serial
             line = ser.readline().decode('utf-8').rstrip() #Se lee lo recibido en el ESP32 (Eliminar después)
             print(line)
-            time.sleep(1)
+            if "saltar_turno" in line:
+                saltar_turno_ESP32 = True
+                print(saltar_turno_ESP32)
+                #ser.reset_input_buffer
 
 def cicloPrincipal():
     jugando = True

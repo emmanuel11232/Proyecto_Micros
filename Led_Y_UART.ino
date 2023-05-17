@@ -1,25 +1,44 @@
 #include <FastLED.h>
-#define LED_PIN     16
-#define LED_PIN2    17
+#define LED_PIN     3
+#define LED_PIN2    5
 #define NUM_LEDS    139
+#define SALTAR_PIN    4
+#define DELAY_BOTON 500 //Delay de 500 ms
+
 
 String board[8][8];
 CRGB leds[NUM_LEDS];
 //CRGB leds2[NUM_LEDS];
 
+volatile bool saltar_turno = false;
+long tiempoPrevio = 0;
+
+void saltarTurno() {
+  saltar_turno = true;
+  }
+
 
 void setup() {
   Serial.begin(9600);
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
+  pinMode(SALTAR_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(SALTAR_PIN), saltarTurno, FALLING);
 }
+
 void loop() {
+
+  if (saltar_turno) {
+    if (millis() - tiempoPrevio > DELAY_BOTON) {
+      Serial.println("saltar_turno");
+      tiempoPrevio = millis()
+      }
+      saltar_turno = false;
+    }
   if (Serial.available() > 0) {
     String datos = Serial.readStringUntil('\n');
-    Serial.print("Recibido:");
     for(int i=0;i<=7;i++){
       for(int j=0;j<=7;j++){
         board[i][j]=datos.substring((16*i+2*j),(16*i+2*j)+2);
-        Serial.println(board[i][j]);
       }
     }  
   }
