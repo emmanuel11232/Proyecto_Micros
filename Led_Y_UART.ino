@@ -1,5 +1,5 @@
 #include <FastLED.h>
-#define LED_PIN     3
+#define LED_PIN     16
 #define LED_PIN2    5
 #define NUM_LEDS    139
 #define SALTAR_PIN    4
@@ -26,22 +26,19 @@ void setup() {
 }
 
 void loop() {
-
   if (saltar_turno) {
     if (millis() - tiempoPrevio > DELAY_BOTON) {
       Serial.println("saltar_turno");
-      tiempoPrevio = millis()
+      tiempoPrevio = millis();
       }
       saltar_turno = false;
     }
-  if (Serial.available() > 0) {
     String datos = Serial.readStringUntil('\n');
     for(int i=0;i<=7;i++){
       for(int j=0;j<=7;j++){
         board[i][j]=datos.substring((16*i+2*j),(16*i+2*j)+2);
       }
     }  
-  }
   int cont = 0;
   for (int n = 0; n<8; n++)
   {
