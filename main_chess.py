@@ -341,6 +341,8 @@ def primerMov(board, primerMovimiento):
     if board[0][0] == "--" and primerMovimiento[5]:
         primerMovimiento[5] = 0
     return primerMovimiento
+
+
 def EscogerModo():
     equipo = "w"
     altotemp = 256
@@ -1439,10 +1441,11 @@ def comunicacion():
             ser.write(DataString.encode('utf-8')) #Se envian los datos mediante el puerto serial
             line = ser.readline().decode('utf-8').rstrip() #Se lee lo recibido en el ESP32 (Eliminar después)
             print(line)
+            ser.reset_input_buffer
             if "saltar_turno" in line:
                 saltar_turno_ESP32 = True
                 print(saltar_turno_ESP32)
-                #ser.reset_input_buffer
+                ser.reset_input_buffer
 
 def cicloPrincipal():
     jugando = True
